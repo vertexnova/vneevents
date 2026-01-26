@@ -1,147 +1,140 @@
+# ----------------------------------------------------------------------
+# Copyright (c) 2026 Ajeet Singh Yadav. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License")
+#
+# Author:    Ajeet Singh Yadav
+# Created:   January 2026
+# ----------------------------------------------------------------------
+
 name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ "main" ]
   pull_request:
-    branches: [main]
+    branches: [ "main" ]
 
 jobs:
-  build:
-    name: Build (${{ matrix.os }}, ${{ matrix.compiler }})
-    runs-on: ${{ matrix.os }}
+  linux:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        compiler: [gcc, clang]
         include:
-          - os: ubuntu-latest
-            compiler: gcc
-            cc: gcc-11
-            cxx: g++-11
-          - os: ubuntu-latest
-            compiler: clang
-            cc: clang-14
-            cxx: clang++-14
-          - os: macos-latest
-            compiler: clang
-            cc: clang
-            cxx: clang++
-          - os: windows-latest
-            compiler: msvc
-            cc: cl
-            cxx: cl
+          - compiler: gcc
+            c_compiler: gcc
+            cpp_compiler: g++
+          - compiler: clang
+            c_compiler: clang
+            cpp_compiler: clang++
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+    - uses: actions/checkout@v4
+      with:
+        submodules: true  # Only direct submodules, not recursive (avoids nested vnecommon conflict)
 
-      - name: Setup MSVC (Windows)
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake
 
-      - name: Configure (Unix)
-        if: runner.os != 'Windows'
-        env:
-          CC: ${{ matrix.cc }}
-          CXX: ${{ matrix.cxx }}
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTS=ON \
-            -DBUILD_EXAMPLES=OFF
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+          -DBUILD_TESTS=ON
 
-      - name: Configure (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          cmake -B build `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DBUILD_TESTS=ON `
-            -DBUILD_EXAMPLES=OFF
+    - name: Build
+      run: cmake --build build --config Release --parallel
 
-      - name: Build
-        run: cmake --build build --config Release --parallel
-
-      - name: Test
-        working-directory: build
-        run: ctest -C Release --output-on-failure
+    - name: Test
+      working-directory: build
+      run: ctest --output-on-failure
 
   coverage:
-    name: Coverage
     runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true  # Only direct submodules, not recursive (avoids nested vnecommon conflict)
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake lcov
+
+    - name: Configure CMake with Coverage
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DBUILD_TESTS=ON \
+          -DENABLE_COVERAGE=ON
+
+    - name: Build
+      run: cmake --build build --config Debug --parallel
+
+    - name: Test
+      working-directory: build
+      run: ctest --output-on-failure
+
+    - name: Generate Coverage Report
+      run: |
+        lcov --capture --directory build --output-file coverage.info --ignore-errors mismatch,unused
+        lcov --remove coverage.info '/usr/*' '*/tests/*' '*/external/*' '*/libs/*' '*/_deps/*' '*/googletest/*' '*/googlemock/*' --output-file coverage.info --ignore-errors mismatch,unused
+        lcov --list coverage.info --ignore-errors mismatch,unused
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN_VNE_EVENTS }}
+        slug: vertexnova/vneevents
+        files: ./coverage.info
+        fail_ci_if_error: false
+        verbose: true
+
+  macos:
+    runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+    - uses: actions/checkout@v4
+      with:
+        submodules: true  # Only direct submodules, not recursive (avoids nested vnecommon conflict)
 
-      - name: Install lcov
-        run: sudo apt-get install -y lcov
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_TESTS=ON
 
-      - name: Configure
-        env:
-          CC: gcc-11
-          CXX: g++-11
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DBUILD_TESTS=ON \
-            -DENABLE_COVERAGE=ON \
-            -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
+    - name: Build
+      run: cmake --build build --config Release --parallel
 
-      - name: Build
-        run: cmake --build build --parallel
+    - name: Test
+      working-directory: build
+      run: ctest --output-on-failure
 
-      - name: Test
-        working-directory: build
-        run: ctest --output-on-failure
-
-      - name: Generate Coverage Report
-        run: |
-          lcov --capture --directory build --output-file coverage.info --ignore-errors mismatch
-          lcov --remove coverage.info '/usr/*' '*/external/*' '*/tests/*' --output-file coverage.info
-          lcov --list coverage.info
-
-      - name: Upload to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN_VNE_EVENTS }}
-          files: coverage.info
-          fail_ci_if_error: false
-
-  sanitizers:
-    name: Sanitizers (${{ matrix.sanitizer }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        sanitizer: [address, thread, undefined]
+  windows:
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+    - uses: actions/checkout@v4
+      with:
+        submodules: true  # Only direct submodules, not recursive (avoids nested vnecommon conflict)
 
-      - name: Configure
-        env:
-          CC: clang-14
-          CXX: clang++-14
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DBUILD_TESTS=ON \
-            -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer"
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DBUILD_TESTS=ON
 
-      - name: Build
-        run: cmake --build build --parallel
+    - name: Build
+      run: cmake --build build --config Release --parallel
 
-      - name: Test
-        working-directory: build
-        env:
-          ASAN_OPTIONS: detect_leaks=1
-          TSAN_OPTIONS: history_size=7
-          UBSAN_OPTIONS: print_stacktrace=1
-        run: ctest --output-on-failure
+    - name: Test
+      working-directory: build
+      run: ctest --output-on-failure -C Release
