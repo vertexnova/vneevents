@@ -4,13 +4,13 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="2" value="Input_C" style="swimlane;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+        <mxCell id="2" value="Input" style="swimlane;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="50" y="520" width="160" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="3" value="InputManager_C" style="swimlane;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+        <mxCell id="3" value="InputManager" style="swimlane;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="340" y="510" width="180" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="4" value="InputState_C" style="swimlane;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+        <mxCell id="4" value="InputState" style="swimlane;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="340" y="300" width="180" height="140" as="geometry" />
         </mxCell>
         <mxCell id="5" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#6c8ebf;" parent="1" source="2" target="3" edge="1">
@@ -19,7 +19,7 @@
         <mxCell id="6" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#9673a6;dashed=1;" parent="1" source="3" target="4" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="7" value="ReadWriteMutex_C" style="swimlane;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+        <mxCell id="7" value="ReadWriteMutex" style="swimlane;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="560" y="470" width="180" height="80" as="geometry" />
         </mxCell>
         <mxCell id="8" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#b85450;dashed=1;" parent="1" source="4" target="7" edge="1">
