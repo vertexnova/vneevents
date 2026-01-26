@@ -66,6 +66,15 @@ option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 include(FindCoverage)
 
 #==============================================================================
+# Documentation Support
+#==============================================================================
+option(ENABLE_DOXYGEN "Enable Doxygen documentation builds" OFF)
+if(ENABLE_DOXYGEN)
+    include(Doxygen)
+    enable_doxygen()
+endif()
+
+#==============================================================================
 # Platform Detection
 #==============================================================================
 
