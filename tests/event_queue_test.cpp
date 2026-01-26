@@ -103,8 +103,8 @@ TEST(EventQueueTest, ThreadSafety) {
     for (int t = 0; t < kNumThreads; ++t) {
         producers.emplace_back([&queue, t]() {
             for (int i = 0; i < kEventsPerThread; ++i) {
-                queue.push(std::make_unique<KeyRepeatEvent>(
-                    KeyCode::eA, static_cast<uint32_t>(t * kEventsPerThread + i)));
+                queue.push(
+                    std::make_unique<KeyRepeatEvent>(KeyCode::eA, static_cast<uint32_t>(t * kEventsPerThread + i)));
             }
         });
     }

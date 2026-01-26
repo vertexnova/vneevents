@@ -27,11 +27,10 @@ class TestListener : public EventListener {
 
 class CountingListener : public EventListener {
    public:
-    explicit CountingListener(std::atomic<int>& counter) : counter_(counter) {}
+    explicit CountingListener(std::atomic<int>& counter)
+        : counter_(counter) {}
 
-    void onEvent(const Event& /*event*/) override {
-        ++counter_;
-    }
+    void onEvent(const Event& /*event*/) override { ++counter_; }
 
    private:
     std::atomic<int>& counter_;
