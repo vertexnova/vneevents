@@ -10,6 +10,7 @@ add_executable(example_01_hello_events
 target_link_libraries(example_01_hello_events
     PRIVATE
         vne::events
+        vne::logging
 )
 
 # Include common utilities directory
