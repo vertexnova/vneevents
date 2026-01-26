@@ -10,6 +10,8 @@ PROJECT_LOGO           =
 INPUT                  = @PROJECT_SOURCE_DIR@/include \
                          @PROJECT_SOURCE_DIR@/src \
                          @CMAKE_CURRENT_SOURCE_DIR@/docs/ \
+                         @CMAKE_CURRENT_SOURCE_DIR@/docs/events/ \
+                         @CMAKE_CURRENT_SOURCE_DIR@/docs/input/ \
                          @CMAKE_CURRENT_SOURCE_DIR@/README.md
 
 OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@/docs/html
