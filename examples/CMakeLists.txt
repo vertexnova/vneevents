@@ -13,3 +13,6 @@ add_subdirectory(02_input_polling)
 
 # 03 - Event Listeners: Multiple listeners and subsystem patterns
 add_subdirectory(03_event_listeners)
+
+# 05 - Game Loop Integration: Complete game loop with event processing and input polling
+add_subdirectory(05_game_loop_integration)
