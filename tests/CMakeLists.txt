@@ -44,6 +44,11 @@ target_link_libraries(TestVneEvents
         GTest::gtest_main
 )
 
+# Link against gcov when coverage is enabled
+if(ENABLE_COVERAGE AND UNIX AND NOT APPLE)
+    target_link_libraries(TestVneEvents PRIVATE gcov)
+endif()
+
 target_include_directories(TestVneEvents
     PRIVATE
         ${PROJECT_SOURCE_DIR}/include
