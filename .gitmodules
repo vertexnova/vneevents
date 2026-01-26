@@ -10,3 +10,6 @@
 [submodule "libs/vnelogging"]
 	path = libs/vnelogging
 	url = git@github.com:vertexnova/vnelogging.git
+[submodule "external/glfw"]
+	path = external/glfw
+	url = https://github.com/glfw/glfw.git
