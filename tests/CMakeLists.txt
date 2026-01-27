@@ -40,7 +40,6 @@ add_executable(TestVneEvents ${TEST_SOURCES})
 target_link_libraries(TestVneEvents
     PRIVATE
         vneevents
-        GTest::gtest
         GTest::gtest_main
 )
 
