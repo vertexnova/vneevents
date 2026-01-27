@@ -40,7 +40,11 @@ set(VNE_LIBS_DIR ${PROJECT_SOURCE_DIR}/libs)
 
 if(NOT TARGET vne::common)
     if(EXISTS "${VNE_LIBS_DIR}/vnecommon/CMakeLists.txt")
+        # vnecommon is header-only; we don't need its example executable
+        set(VNEEVENTS_BUILD_EXAMPLES ${BUILD_EXAMPLES})
+        set(BUILD_EXAMPLES OFF)
         add_subdirectory(libs/vnecommon)
+        set(BUILD_EXAMPLES ${VNEEVENTS_BUILD_EXAMPLES})
     endif()
 endif()
 

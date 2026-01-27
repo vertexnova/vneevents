@@ -36,9 +36,9 @@ class GLFWIntegration {
     void swapBuffers();
     GLFWwindow* getWindow() const { return window_; }
 
-    void handleKeyEvent(int key, int scancode, int action, int mods);
+    void handleKeyEvent(int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods);
     void handleMouseMove(double x, double y);
-    void handleMouseButton(int button, int action, int mods);
+    void handleMouseButton(int button, int action, [[maybe_unused]] int mods);
     void handleWindowResize(int width, int height);
     void handleWindowClose();
 

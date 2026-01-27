@@ -47,7 +47,7 @@ bool GLFWIntegration::initialize(int width, int height, const char* title) {
     }
 
     glfwMakeContextCurrent(window_);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         VNE_LOG_ERROR << "Failed to initialize GLAD";
         glfwDestroyWindow(window_);
         window_ = nullptr;
@@ -118,7 +118,7 @@ void GLFWIntegration::windowCloseCallback(GLFWwindow* w) {
     if (i != nullptr) i->handleWindowClose();
 }
 
-void GLFWIntegration::handleKeyEvent(int key, int scancode, int action, int mods) {
+void GLFWIntegration::handleKeyEvent(int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods) {
     vne::events::KeyCode k = glfwKeyToKeyCode(key);
     if (action == GLFW_PRESS || action == GLFW_REPEAT) {
         event_manager_.pushEvent(std::make_unique<vne::events::KeyPressedEvent>(k));
@@ -130,7 +130,7 @@ void GLFWIntegration::handleKeyEvent(int key, int scancode, int action, int mods
     }
 }
 
-void GLFWIntegration::handleMouseButton(int button, int action, int mods) {
+void GLFWIntegration::handleMouseButton(int button, int action, [[maybe_unused]] int mods) {
     vne::events::MouseButton b = glfwButtonToMouseButton(button);
     if (action == GLFW_PRESS) {
         event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonPressedEvent>(b));
