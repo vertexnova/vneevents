@@ -87,7 +87,6 @@ target_link_libraries(TestVneEvents
     PRIVATE
         ${GTEST_LIBRARIES}
         vne::events
-        vne::logging
 )
 
 # Web platform specific configuration
