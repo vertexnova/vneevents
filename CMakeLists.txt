@@ -200,14 +200,6 @@ if(TARGET vne::common)
     target_link_libraries(vneevents PUBLIC vne::common)
 endif()
 
-# Link against VneLogging if available (optional, for console logging)
-if(TARGET vne::logging)
-    target_link_libraries(vneevents PUBLIC vne::logging)
-    message(STATUS "VneEvents: Linked against vne::logging")
-elseif(TARGET vnelogging)
-    target_link_libraries(vneevents PUBLIC vnelogging)
-    message(STATUS "VneEvents: Linked against vnelogging")
-endif()
 
 set_target_properties(vneevents PROPERTIES
     VERSION ${PROJECT_VERSION}
