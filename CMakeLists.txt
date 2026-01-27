@@ -10,6 +10,15 @@
 
 cmake_minimum_required(VERSION 3.16)
 
+# Set compiler as CACHE variables before project() to ensure they persist
+# when submodules call their own project() commands
+if(DEFINED CMAKE_C_COMPILER)
+    set(CMAKE_C_COMPILER ${CMAKE_C_COMPILER} CACHE PATH "C compiler" FORCE)
+endif()
+if(DEFINED CMAKE_CXX_COMPILER)
+    set(CMAKE_CXX_COMPILER ${CMAKE_CXX_COMPILER} CACHE PATH "C++ compiler" FORCE)
+endif()
+
 project(vneevents VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
