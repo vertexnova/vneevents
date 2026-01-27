@@ -5,6 +5,7 @@
 add_executable(example_04_multithreaded_events
     main.cpp
     threaded_demo.cpp
+    listeners.cpp
 )
 
 target_link_libraries(example_04_multithreaded_events

@@ -12,6 +12,7 @@
 #include "threaded_demo.h"
 
 #include "common/logging_guard.h"
+#include "listeners.h"
 
 #include <vertexnova/events/events.h>
 #include <vertexnova/logging/logging.h>
@@ -49,22 +50,6 @@ void ThreadedDemo::demonstrateConcurrentEventPushing() {
     VNE_LOG_INFO << "--- Concurrent Event Pushing ---";
 
     auto& manager = vne::events::EventManager::instance();
-
-    // Create a listener to count events
-    class EventCounter : public vne::events::EventListener {
-       public:
-        explicit EventCounter(std::atomic<int>* counter)
-            : counter_(counter) {}
-
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eKeyPressed) {
-                (*counter_)++;
-            }
-        }
-
-       private:
-        std::atomic<int>* counter_;
-    };
 
     auto counter = std::make_shared<EventCounter>(&events_received_);
     manager.registerListener(vne::events::EventType::eKeyPressed, counter);
@@ -116,21 +101,6 @@ void ThreadedDemo::demonstrateConcurrentListenerRegistration() {
 
     auto& manager = vne::events::EventManager::instance();
 
-    class ThreadListener : public vne::events::EventListener {
-       public:
-        explicit ThreadListener(int thread_id)
-            : thread_id_(thread_id) {}
-
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eKeyPressed) {
-                VNE_LOG_INFO << "    [Thread " << thread_id_ << "] Received key event";
-            }
-        }
-
-       private:
-        int thread_id_;
-    };
-
     const int num_threads = 3;
     std::vector<std::thread> threads;
     std::vector<std::shared_ptr<vne::events::EventListener>> listeners;
@@ -170,21 +140,6 @@ void ThreadedDemo::demonstrateThreadSafeProcessing() {
     VNE_LOG_INFO << "--- Thread-Safe Event Processing ---";
 
     auto& manager = vne::events::EventManager::instance();
-
-    class SafeListener : public vne::events::EventListener {
-       public:
-        explicit SafeListener(std::atomic<int>* counter)
-            : counter_(counter) {}
-
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eMouseMoved) {
-                (*counter_)++;
-            }
-        }
-
-       private:
-        std::atomic<int>* counter_;
-    };
 
     auto safe_listener = std::make_shared<SafeListener>(&events_received_);
     manager.registerListener(vne::events::EventType::eMouseMoved, safe_listener);

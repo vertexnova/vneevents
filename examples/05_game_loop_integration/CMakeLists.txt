@@ -5,6 +5,7 @@
 add_executable(example_05_game_loop_integration
     main.cpp
     game_loop_demo.cpp
+    listeners.cpp
 )
 
 target_link_libraries(example_05_game_loop_integration

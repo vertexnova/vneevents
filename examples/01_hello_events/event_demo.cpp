@@ -12,15 +12,11 @@
 #include "event_demo.h"
 
 #include "common/logging_guard.h"
+#include "listeners.h"
 
 #include <vertexnova/logging/logging.h>
 
 namespace vne::events::examples {
-
-// Forward declarations for listener classes
-class KeyboardListener;
-class MouseListener;
-class WindowListener;
 
 void EventDemo::run() {
     VNE_LOG_INFO << "=== Event System Demonstration ===";
@@ -36,20 +32,6 @@ void EventDemo::run() {
 
 void EventDemo::demonstrateKeyboardEvents() {
     VNE_LOG_INFO << "--- Keyboard Events ---";
-
-    // Create a listener for keyboard events
-    class KeyboardListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eKeyPressed) {
-                const auto& key_event = static_cast<const vne::events::KeyPressedEvent&>(event);
-                VNE_LOG_INFO << "  Received: " << key_event.toString();
-            } else if (event.type() == vne::events::EventType::eKeyReleased) {
-                const auto& key_event = static_cast<const vne::events::KeyReleasedEvent&>(event);
-                VNE_LOG_INFO << "  Received: " << key_event.toString();
-            }
-        }
-    };
 
     auto& manager = vne::events::EventManager::instance();
     auto keyboard_listener = std::make_shared<KeyboardListener>();
@@ -77,24 +59,6 @@ void EventDemo::demonstrateKeyboardEvents() {
 void EventDemo::demonstrateMouseEvents() {
     VNE_LOG_INFO << "--- Mouse Events ---";
 
-    // Create a listener for mouse events
-    class MouseListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eMouseMoved) {
-                const auto& mouse_event = static_cast<const vne::events::MouseMovedEvent&>(event);
-                VNE_LOG_INFO << "  Received: " << mouse_event.toString();
-            } else if (event.type() == vne::events::EventType::eMouseButtonPressed) {
-                const auto& button_event =
-                    static_cast<const vne::events::MouseButtonPressedEvent&>(event);
-                VNE_LOG_INFO << "  Received: " << button_event.toString();
-            } else if (event.type() == vne::events::EventType::eMouseScrolled) {
-                const auto& scroll_event = static_cast<const vne::events::MouseScrolledEvent&>(event);
-                VNE_LOG_INFO << "  Received: " << scroll_event.toString();
-            }
-        }
-    };
-
     auto& manager = vne::events::EventManager::instance();
     auto mouse_listener = std::make_shared<MouseListener>();
 
@@ -121,19 +85,6 @@ void EventDemo::demonstrateMouseEvents() {
 
 void EventDemo::demonstrateWindowEvents() {
     VNE_LOG_INFO << "--- Window Events ---";
-
-    // Create a listener for window events
-    class WindowListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eWindowResize) {
-                const auto& resize_event = static_cast<const vne::events::WindowResizeEvent&>(event);
-                VNE_LOG_INFO << "  Received: " << resize_event.toString();
-            } else if (event.type() == vne::events::EventType::eWindowClose) {
-                VNE_LOG_INFO << "  Received: WindowCloseEvent";
-            }
-        }
-    };
 
     auto& manager = vne::events::EventManager::instance();
     auto window_listener = std::make_shared<WindowListener>();

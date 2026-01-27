@@ -12,6 +12,7 @@
 #include "game_loop_demo.h"
 
 #include "common/logging_guard.h"
+#include "listeners.h"
 
 #include <vertexnova/events/events.h>
 #include <vertexnova/logging/logging.h>
@@ -23,29 +24,6 @@ namespace vne::events::examples {
 void GameLoopDemo::run() {
     VNE_LOG_INFO << "=== Game Loop Integration Demonstration ===";
     VNE_LOG_INFO << "";
-
-    // Register event listeners
-    class GameEventListener : public vne::events::EventListener {
-       public:
-        explicit GameEventListener(bool* running)
-            : running_(running) {}
-
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eWindowClose) {
-                VNE_LOG_INFO << "  [Event] Window close requested";
-                *running_ = false;
-            } else if (event.type() == vne::events::EventType::eWindowResize) {
-                const auto& resize_event = static_cast<const vne::events::WindowResizeEvent&>(event);
-                VNE_LOG_INFO << "  [Event] Window resized to: " << resize_event.width() << "x" << resize_event.height();
-            } else if (event.type() == vne::events::EventType::eKeyPressed) {
-                const auto& key_event = static_cast<const vne::events::KeyPressedEvent&>(event);
-                VNE_LOG_INFO << "  [Event] Key pressed: " << static_cast<int>(key_event.keyCode());
-            }
-        }
-
-       private:
-        bool* running_;
-    };
 
     auto& manager = vne::events::EventManager::instance();
     auto game_listener = std::make_shared<GameEventListener>(&running_);

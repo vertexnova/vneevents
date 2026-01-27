@@ -5,6 +5,7 @@
 add_executable(example_03_event_listeners
     main.cpp
     listener_demo.cpp
+    listeners.cpp
 )
 
 target_link_libraries(example_03_event_listeners

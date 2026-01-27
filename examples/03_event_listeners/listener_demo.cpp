@@ -12,6 +12,7 @@
 #include "listener_demo.h"
 
 #include "common/logging_guard.h"
+#include "listeners.h"
 
 #include <vertexnova/events/events.h>
 #include <vertexnova/logging/logging.h>
@@ -35,37 +36,6 @@ void ListenerDemo::run() {
 void ListenerDemo::demonstrateMultipleListeners() {
     VNE_LOG_INFO << "--- Multiple Listeners for Same Event Type ---";
 
-    // Create multiple listeners for key pressed events
-    class AudioListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eKeyPressed) {
-                const auto& key_event = static_cast<const vne::events::KeyPressedEvent&>(event);
-                VNE_LOG_INFO << "  [Audio] Playing key press sound for key: " << static_cast<int>(key_event.keyCode());
-            }
-        }
-    };
-
-    class UIListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eKeyPressed) {
-                const auto& key_event = static_cast<const vne::events::KeyPressedEvent&>(event);
-                VNE_LOG_INFO << "  [UI] Updating UI for key: " << static_cast<int>(key_event.keyCode());
-            }
-        }
-    };
-
-    class GameplayListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eKeyPressed) {
-                const auto& key_event = static_cast<const vne::events::KeyPressedEvent&>(event);
-                VNE_LOG_INFO << "  [Gameplay] Handling key press: " << static_cast<int>(key_event.keyCode());
-            }
-        }
-    };
-
     auto& manager = vne::events::EventManager::instance();
     auto audio_listener = std::make_shared<AudioListener>();
     auto ui_listener = std::make_shared<UIListener>();
@@ -88,40 +58,6 @@ void ListenerDemo::demonstrateMultipleListeners() {
 
 void ListenerDemo::demonstrateSubsystemListeners() {
     VNE_LOG_INFO << "--- Subsystem-Specific Listeners ---";
-
-    // Input subsystem listener
-    class InputListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eKeyPressed ||
-                event.type() == vne::events::EventType::eKeyReleased ||
-                event.type() == vne::events::EventType::eMouseButtonPressed) {
-                VNE_LOG_INFO << "  [Input] Handling input event: " << event.name();
-            }
-        }
-    };
-
-    // Window subsystem listener
-    class WindowListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eWindowResize ||
-                event.type() == vne::events::EventType::eWindowClose) {
-                VNE_LOG_INFO << "  [Window] Handling window event: " << event.name();
-            }
-        }
-    };
-
-    // Render subsystem listener
-    class RenderListener : public vne::events::EventListener {
-       public:
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eWindowResize) {
-                const auto& resize_event = static_cast<const vne::events::WindowResizeEvent&>(event);
-                VNE_LOG_INFO << "  [Render] Resizing render target to: " << resize_event.width() << "x" << resize_event.height();
-            }
-        }
-    };
 
     auto& manager = vne::events::EventManager::instance();
     auto input_listener = std::make_shared<InputListener>();
@@ -156,22 +92,6 @@ void ListenerDemo::demonstrateSubsystemListeners() {
 
 void ListenerDemo::demonstrateListenerLifecycle() {
     VNE_LOG_INFO << "--- Listener Lifecycle Management ---";
-
-    class TemporaryListener : public vne::events::EventListener {
-       public:
-        explicit TemporaryListener(const std::string& name)
-            : name_(name) {}
-
-        void onEvent(const vne::events::Event& event) override {
-            if (event.type() == vne::events::EventType::eKeyPressed) {
-                const auto& key_event = static_cast<const vne::events::KeyPressedEvent&>(event);
-                VNE_LOG_INFO << "  [" << name_ << "] Received key: " << static_cast<int>(key_event.keyCode());
-            }
-        }
-
-       private:
-        std::string name_;
-    };
 
     auto& manager = vne::events::EventManager::instance();
 
