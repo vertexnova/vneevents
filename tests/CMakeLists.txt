@@ -42,6 +42,10 @@ target_link_libraries(TestVneEvents
         vneevents
         GTest::gtest_main
 )
+# Test main.cpp uses vnelogging; ensure include path and library are available when present
+if(TARGET vne::logging)
+    target_link_libraries(TestVneEvents PRIVATE vne::logging)
+endif()
 
 # Link against gcov when coverage is enabled
 if(ENABLE_COVERAGE AND UNIX AND NOT APPLE)
