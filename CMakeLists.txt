@@ -12,7 +12,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Project declaration
-project(vnemath VERSION 1.0.0 LANGUAGES CXX)
+project(vneevents VERSION 1.0.0 LANGUAGES CXX)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 20)
