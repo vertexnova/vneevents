@@ -11,13 +11,16 @@
 
 #include "game_loop_demo.h"
 
-#include "common/logging_guard.h"
 #include "listeners.h"
 
 #include <vertexnova/events/events.h>
 #include <vertexnova/logging/logging.h>
 
 #include <thread>
+
+namespace  {
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.game_loop_integration")
+}
 
 namespace vne::events::examples {
 

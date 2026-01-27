@@ -11,7 +11,6 @@
 
 #include "threaded_demo.h"
 
-#include "common/logging_guard.h"
 #include "listeners.h"
 
 #include <vertexnova/events/events.h>
@@ -19,6 +18,10 @@
 
 #include <thread>
 #include <vector>
+
+namespace {
+    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.multithreaded_events")
+}
 
 namespace vne::events::examples {
 

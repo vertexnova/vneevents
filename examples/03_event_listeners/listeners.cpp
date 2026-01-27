@@ -13,6 +13,10 @@
 
 #include <vertexnova/logging/logging.h>
 
+namespace {
+    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.event_listeners")
+}
+
 namespace vne::events::examples {
 
 void AudioListener::onEvent(const vne::events::Event& event) {

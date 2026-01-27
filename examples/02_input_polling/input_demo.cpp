@@ -11,10 +11,12 @@
 
 #include "input_demo.h"
 
-#include "common/logging_guard.h"
-
 #include <vertexnova/events/events.h>
 #include <vertexnova/logging/logging.h>
+
+namespace {
+    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.input_polling")
+}
 
 namespace vne::events::examples {
 

@@ -11,10 +11,13 @@
 
 #include "event_demo.h"
 
-#include "common/logging_guard.h"
 #include "listeners.h"
 
 #include <vertexnova/logging/logging.h>
+
+namespace  {
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.hello_events")
+}
 
 namespace vne::events::examples {
 

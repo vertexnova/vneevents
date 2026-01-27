@@ -13,6 +13,10 @@
 
 #include <vertexnova/logging/logging.h>
 
+namespace  {
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.multithreaded_events")
+}
+
 namespace vne::events::examples {
 
 EventCounter::EventCounter(std::atomic<int>* counter)

@@ -9,9 +9,6 @@
 
 #include <vertexnova/logging/logging.h>
 
-// Create a logger category for examples
-CREATE_VNE_LOGGER_CATEGORY("vneevents.examples")
-
 namespace vne::events::examples {
 
 /**

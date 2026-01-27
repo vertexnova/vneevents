@@ -16,6 +16,10 @@
 
 #include <vertexnova/logging/logging.h>
 
+namespace {
+    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.multithreaded_events")
+}
+
 using vne::events::examples::LoggingGuard_C;
 using vne::events::examples::ThreadedDemo;
 

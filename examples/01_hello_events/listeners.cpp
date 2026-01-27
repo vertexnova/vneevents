@@ -13,6 +13,9 @@
 
 #include <vertexnova/logging/logging.h>
 
+namespace {
+    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.hello_events")
+}
 namespace vne::events::examples {
 
 void KeyboardListener::onEvent(const vne::events::Event& event) {
