@@ -20,9 +20,13 @@ CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.glfw_integration")
 namespace vne::events::examples {
 
 GLFWIntegration::GLFWIntegration(vne::events::EventManager& event_manager)
-    : event_manager_(event_manager), window_(nullptr), initialized_(false) {}
+    : event_manager_(event_manager)
+    , window_(nullptr)
+    , initialized_(false) {}
 
-GLFWIntegration::~GLFWIntegration() { shutdown(); }
+GLFWIntegration::~GLFWIntegration() {
+    shutdown();
+}
 
 bool GLFWIntegration::initialize(int width, int height, const char* title) {
     if (!glfwInit()) {
@@ -75,11 +79,13 @@ bool GLFWIntegration::shouldClose() const {
 }
 
 void GLFWIntegration::pollEvents() {
-    if (window_) glfwPollEvents();
+    if (window_)
+        glfwPollEvents();
 }
 
 void GLFWIntegration::swapBuffers() {
-    if (window_) glfwSwapBuffers(window_);
+    if (window_)
+        glfwSwapBuffers(window_);
 }
 
 void GLFWIntegration::shutdown() {
@@ -95,27 +101,32 @@ void GLFWIntegration::shutdown() {
 
 void GLFWIntegration::keyCallback(GLFWwindow* w, int key, int scancode, int action, int mods) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr) i->handleKeyEvent(key, scancode, action, mods);
+    if (i != nullptr)
+        i->handleKeyEvent(key, scancode, action, mods);
 }
 
 void GLFWIntegration::mouseButtonCallback(GLFWwindow* w, int button, int action, int mods) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr) i->handleMouseButton(button, action, mods);
+    if (i != nullptr)
+        i->handleMouseButton(button, action, mods);
 }
 
 void GLFWIntegration::mouseMoveCallback(GLFWwindow* w, double xpos, double ypos) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr) i->handleMouseMove(xpos, ypos);
+    if (i != nullptr)
+        i->handleMouseMove(xpos, ypos);
 }
 
 void GLFWIntegration::windowResizeCallback(GLFWwindow* w, int width, int height) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr) i->handleWindowResize(width, height);
+    if (i != nullptr)
+        i->handleWindowResize(width, height);
 }
 
 void GLFWIntegration::windowCloseCallback(GLFWwindow* w) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr) i->handleWindowClose();
+    if (i != nullptr)
+        i->handleWindowClose();
 }
 
 void GLFWIntegration::handleKeyEvent(int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods) {
@@ -123,7 +134,8 @@ void GLFWIntegration::handleKeyEvent(int key, [[maybe_unused]] int scancode, int
     if (action == GLFW_PRESS || action == GLFW_REPEAT) {
         event_manager_.pushEvent(std::make_unique<vne::events::KeyPressedEvent>(k));
         vne::events::Input::updateKeyState(static_cast<int>(k), true);
-        if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window_, GLFW_TRUE);
+        if (key == GLFW_KEY_ESCAPE)
+            glfwSetWindowShouldClose(window_, GLFW_TRUE);
     } else if (action == GLFW_RELEASE) {
         event_manager_.pushEvent(std::make_unique<vne::events::KeyReleasedEvent>(k));
         vne::events::Input::updateKeyState(static_cast<int>(k), false);
@@ -157,23 +169,35 @@ void GLFWIntegration::handleWindowClose() {
 
 vne::events::KeyCode GLFWIntegration::glfwKeyToKeyCode(int glfw_key) {
     switch (glfw_key) {
-        case GLFW_KEY_SPACE: return vne::events::KeyCode::eSpace;
-        case GLFW_KEY_A: return vne::events::KeyCode::eA;
-        case GLFW_KEY_D: return vne::events::KeyCode::eD;
-        case GLFW_KEY_S: return vne::events::KeyCode::eS;
-        case GLFW_KEY_W: return vne::events::KeyCode::eW;
-        case GLFW_KEY_ESCAPE: return vne::events::KeyCode::eEscape;
-        case GLFW_KEY_ENTER: return vne::events::KeyCode::eEnter;
-        default: return vne::events::KeyCode::eUnknown;
+        case GLFW_KEY_SPACE:
+            return vne::events::KeyCode::eSpace;
+        case GLFW_KEY_A:
+            return vne::events::KeyCode::eA;
+        case GLFW_KEY_D:
+            return vne::events::KeyCode::eD;
+        case GLFW_KEY_S:
+            return vne::events::KeyCode::eS;
+        case GLFW_KEY_W:
+            return vne::events::KeyCode::eW;
+        case GLFW_KEY_ESCAPE:
+            return vne::events::KeyCode::eEscape;
+        case GLFW_KEY_ENTER:
+            return vne::events::KeyCode::eEnter;
+        default:
+            return vne::events::KeyCode::eUnknown;
     }
 }
 
 vne::events::MouseButton GLFWIntegration::glfwButtonToMouseButton(int glfw_button) {
     switch (glfw_button) {
-        case GLFW_MOUSE_BUTTON_LEFT: return vne::events::MouseButton::eLeft;
-        case GLFW_MOUSE_BUTTON_RIGHT: return vne::events::MouseButton::eRight;
-        case GLFW_MOUSE_BUTTON_MIDDLE: return vne::events::MouseButton::eMiddle;
-        default: return vne::events::MouseButton::eLeft;
+        case GLFW_MOUSE_BUTTON_LEFT:
+            return vne::events::MouseButton::eLeft;
+        case GLFW_MOUSE_BUTTON_RIGHT:
+            return vne::events::MouseButton::eRight;
+        case GLFW_MOUSE_BUTTON_MIDDLE:
+            return vne::events::MouseButton::eMiddle;
+        default:
+            return vne::events::MouseButton::eLeft;
     }
 }
 
