@@ -1,21 +1,46 @@
-# VneEvents
+# VertexNova Events
 
-A lightweight, thread-safe event system for the VertexNova Engine.
+<p align="center">
+  <img src="icons/vertexnova_logo_medallion_with_text.svg" alt="VertexNova Events" width="280"/>
+</p>
 
-[![CI](https://github.com/vertexnova/vneevents/actions/workflows/ci.yml/badge.svg)](https://github.com/vertexnova/vneevents/actions/workflows/ci.yml)
+<p align="center">
+  <strong>A lightweight, thread-safe event system for games and interactive applications</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/vertexnova/vneevents/actions/workflows/ci.yml">
+    <img src="https://github.com/vertexnova/vneevents/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"/>
+  </a>
+  <a href="https://codecov.io/gh/vertexnova/vneevents">
+    <img src="https://codecov.io/gh/vertexnova/vneevents/branch/main/graph/badge.svg" alt="Coverage"/>
+  </a>
+  <img src="https://img.shields.io/badge/C%2B%2B-17-blue.svg" alt="C++17"/>
+  <img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License"/>
+</p>
+
+---
+
+## About
+
+**VertexNova Events** (VneEvents) is a modern C++ event library that provides type-safe input events, a thread-safe queue, and a listener-dispatcher model. It is designed for use in games, tools, and any application that needs keyboard, mouse, touch, and window events with minimal dependencies.
+
+For **architecture and design details** (event flow, components, best practices), see the [Event System](docs/events/events.md) and [Input System](docs/input/input.md) documentation.
 
 ## Features
 
-- **Type-safe events**: Strongly typed event classes for keyboard, mouse, window, and touch inputs
-- **Thread-safe**: All event queue and dispatcher operations are protected by read-write locks
-- **Flexible architecture**: Use the EventBus for queued processing or dispatch events immediately
-- **Input polling**: Static `Input` class for polling keyboard, mouse, and gamepad state
-- **Zero dependencies**: Header-only core components (except for input state tracking)
-- **Modern C++17**: Uses `std::shared_mutex`, `[[nodiscard]]`, and structured bindings
+- **Type-safe events** — Strongly typed event classes for keyboard, mouse, window, and touch
+- **Modifier support** — Shift, Ctrl, Alt, Super (and optional Cmd) on key and mouse events
+- **Touch** — Touch press, move, and release; can be emulated from mouse (e.g. LMB → touch id 0)
+- **Thread-safe** — Event queue and dispatcher use read-write locks for safe concurrent use
+- **Flexible usage** — EventBus for queued processing or direct dispatch
+- **Input polling** — Static `Input` API for per-frame keyboard, mouse, and button state
+- **Modern C++17** — `std::shared_mutex`, `[[nodiscard]]`, structured bindings
+- **Optional logging** — Integrates with [vnelogging](https://github.com/vertexnova/vnelogging) when available
 
 ## Quick Start
 
-### Include the Library
+### Include the library
 
 ```cpp
 #include <vertexnova/events/events.h>
@@ -23,78 +48,52 @@ A lightweight, thread-safe event system for the VertexNova Engine.
 using namespace vne::events;
 ```
 
-### Create an Event Listener
+### Create an event listener
 
 ```cpp
 class MyListener : public EventListener {
 public:
     void onEvent(const Event& event) override {
         if (event.type() == EventType::eKeyPressed) {
-            auto& key_event = static_cast<const KeyPressedEvent&>(event);
-            std::cout << "Key pressed: " << static_cast<int>(key_event.keyCode()) << std::endl;
+            auto& e = static_cast<const KeyPressedEvent&>(event);
+            std::cout << "Key " << static_cast<int>(e.keyCode())
+                      << " mods=" << static_cast<int>(e.modifiers()) << std::endl;
         }
     }
 };
 ```
 
-### Register and Process Events
+### Register and process events
 
 ```cpp
 auto& manager = EventManager::instance();
 
-// Register listener
 auto listener = std::make_shared<MyListener>();
 manager.registerListener(EventType::eKeyPressed, listener);
 
-// Push events
 manager.pushEvent(std::make_unique<KeyPressedEvent>(KeyCode::eA));
 manager.pushEvent(std::make_unique<MouseMovedEvent>(100.0, 200.0));
 
-// Process all pending events
 manager.processEvents();
 ```
 
-### Poll Input State
+### Poll input state
 
 ```cpp
-// In your game loop
-if (Input::isKeyPressed(static_cast<int>(KeyCode::eW))) {
-    // Move forward
-}
+if (Input::isKeyPressed(static_cast<int>(KeyCode::eW)))
+    ; // move forward
 
 if (Input::isMouseButtonJustPressed(0)) {
     auto [x, y] = Input::mousePosition();
-    // Handle click at (x, y)
+    // handle click at (x, y)
 }
 
-// At end of frame
-Input::nextFrame();
+Input::nextFrame();  // call once per frame
 ```
 
-## Architecture
+## Event types
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                       EventManager                           │
-│  ┌─────────────────┐        ┌─────────────────┐             │
-│  │   EventQueue    │───────>│   EventBus      │             │
-│  │  (thread-safe)  │        │                 │             │
-│  └─────────────────┘        │  ┌───────────┐  │             │
-│                             │  │Dispatcher │  │             │
-│                             │  └─────┬─────┘  │             │
-│                             └────────┼────────┘             │
-└──────────────────────────────────────┼──────────────────────┘
-                                       │
-                    ┌──────────────────┼──────────────────┐
-                    │                  │                  │
-              ┌─────▼─────┐     ┌──────▼──────┐    ┌──────▼──────┐
-              │ Listener1 │     │  Listener2  │    │  Listener3  │
-              └───────────┘     └─────────────┘    └─────────────┘
-```
-
-## Event Types
-
-| Event Class | EventType | Category |
+| Event class | EventType | Category |
 |-------------|-----------|----------|
 | `KeyPressedEvent` | `eKeyPressed` | Keyboard, Input |
 | `KeyReleasedEvent` | `eKeyReleased` | Keyboard, Input |
@@ -117,26 +116,52 @@ Input::nextFrame();
 - CMake 3.16+
 - C++17 compiler (GCC 8+, Clang 7+, MSVC 2019+)
 
-### Build Steps
+### Build
 
 ```bash
-mkdir build && cd build
-cmake .. -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
-cmake --build .
-ctest
+git clone --recurse-submodules https://github.com/vertexnova/vneevents.git
+cd vneevents
+
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
+cmake --build build
+ctest --test-dir build
 ```
 
-### Build Options
+### CMake options
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `BUILD_TESTS` | ON | Build the test suite |
 | `BUILD_EXAMPLES` | OFF | Build example programs |
-| `ENABLE_COVERAGE` | OFF | Enable code coverage |
+| `ENABLE_COVERAGE` | OFF | Enable code coverage (Debug) |
+
+Platform-specific scripts are in [`scripts/`](scripts/README.md) (e.g. `build_linux.sh`, `build_macos.sh`).
+
+## Examples
+
+When built with `-DBUILD_EXAMPLES=ON`, the following example programs are available:
+
+| Example | Description |
+|---------|-------------|
+| [01_hello_events](examples/01_hello_events) | Event listeners, registration, pushing, and processing; keyboard, mouse, and window events. |
+| [02_input_polling](examples/02_input_polling) | Input state polling with `Input::isKeyPressed()`, mouse position/buttons, and `nextFrame()`. |
+| [03_event_listeners](examples/03_event_listeners) | Multiple listeners per event type, subsystem listeners, and dynamic register/unregister. |
+| [04_multithreaded_events](examples/04_multithreaded_events) | Thread-safe event queue with concurrent event pushing and listener registration. |
+| [05_game_loop_integration](examples/05_game_loop_integration) | Game loop with event processing, input polling, and per-frame state. |
+| [06_glfw_integration](examples/06_glfw_integration) | GLFW + OpenGL window; logs events (key, mouse, touch, modifiers) and input polling; ESC or close to exit. |
+
+Each example has its own [README](examples/01_hello_events/README.md) with build and run instructions. Run from the build tree, for example:
+
+```bash
+cmake -B build -DBUILD_EXAMPLES=ON
+cmake --build build
+./build/bin/examples/example_01_hello_events
+# or: example_06_glfw_integration (needs GLFW; desktop only)
+```
 
 ## Integration
 
-### As a Submodule
+### As a submodule
 
 ```bash
 git submodule add https://github.com/vertexnova/vneevents.git libs/vneevents
@@ -147,14 +172,35 @@ add_subdirectory(libs/vneevents)
 target_link_libraries(your_target PRIVATE vne::events)
 ```
 
-### Using find_package
+### Using FetchContent
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    vneevents
+    GIT_REPOSITORY https://github.com/vertexnova/vneevents.git
+    GIT_TAG        main
+)
+set(BUILD_EXAMPLES OFF)
+FetchContent_MakeAvailable(vneevents)
+
+target_link_libraries(your_target PRIVATE vne::events)
+```
+
+### Installed package
 
 ```cmake
 find_package(VneEvents REQUIRED)
 target_link_libraries(your_target PRIVATE vne::events)
 ```
 
-## Platform Support
+## Documentation
+
+- [Event system](docs/events/events.md) — Architecture, components, and usage
+- [Input system](docs/input/input.md) — Polling and input handling
+- [API (Doxygen)](docs/README.md) — Generate with `-DENABLE_DOXYGEN=ON`
+
+## Platform support
 
 | Platform | Status |
 |----------|--------|
@@ -171,4 +217,4 @@ Licensed under the Apache License, Version 2.0.
 
 ## Author
 
-Ajeet Singh Yadav - [yadav.ajeetsingh2020@gmail.com](mailto:yadav.ajeetsingh2020@gmail.com)
+Ajeet Singh Yadav — [yadav.ajeetsingh2020@gmail.com](mailto:yadav.ajeetsingh2020@gmail.com)
