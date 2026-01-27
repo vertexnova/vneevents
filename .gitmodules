@@ -13,3 +13,6 @@
 [submodule "external/glfw"]
 	path = external/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "libs/opengl-glad"]
+	path = libs/opengl-glad
+	url = git@github.com:vertexnova/opengl-glad.git
