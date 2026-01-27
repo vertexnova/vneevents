@@ -8,20 +8,14 @@
 # VertexNova Events - Lightweight, thread-safe event system
 #==============================================================================
 
+# Minimum required CMake version
 cmake_minimum_required(VERSION 3.16)
 
-# Set compiler as CACHE variables before project() to ensure they persist
-# when submodules call their own project() commands
-if(DEFINED CMAKE_C_COMPILER)
-    set(CMAKE_C_COMPILER ${CMAKE_C_COMPILER} CACHE PATH "C compiler" FORCE)
-endif()
-if(DEFINED CMAKE_CXX_COMPILER)
-    set(CMAKE_CXX_COMPILER ${CMAKE_CXX_COMPILER} CACHE PATH "C++ compiler" FORCE)
-endif()
+# Project declaration
+project(vnemath VERSION 1.0.0 LANGUAGES CXX)
 
-project(vneevents VERSION 1.0.0 LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 17)
+# Set the C++ standard
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
