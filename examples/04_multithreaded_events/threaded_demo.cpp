@@ -68,7 +68,7 @@ void ThreadedDemo::demonstrateConcurrentEventPushing() {
 
     // Launch threads that push events concurrently
     for (int i = 0; i < num_threads; ++i) {
-        threads.emplace_back([&manager, i, events_per_thread]() {
+        threads.emplace_back([&manager, i]() {
             for (int j = 0; j < events_per_thread; ++j) {
                 // Each thread pushes events with different key codes
                 int key_code = static_cast<int>(vne::events::KeyCode::eA) + (i * events_per_thread) + j;
@@ -160,7 +160,7 @@ void ThreadedDemo::demonstrateThreadSafeProcessing() {
 
     // Launch producer threads
     for (int i = 0; i < num_threads; ++i) {
-        threads.emplace_back([&manager, &start_flag, &threads_completed, i, events_per_thread]() {
+        threads.emplace_back([&manager, &start_flag, &threads_completed, i]() {
             // Wait for start signal
             while (!start_flag.load()) {
                 std::this_thread::yield();

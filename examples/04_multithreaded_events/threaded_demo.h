@@ -32,11 +32,11 @@ class ThreadedDemo {
     ThreadedDemo() = default;
     ~ThreadedDemo() = default;
 
-    // Non-copyable, movable
+    // Non-copyable, non-movable (atomic is not movable)
     ThreadedDemo(const ThreadedDemo&) = delete;
     ThreadedDemo& operator=(const ThreadedDemo&) = delete;
-    ThreadedDemo(ThreadedDemo&&) noexcept = default;
-    ThreadedDemo& operator=(ThreadedDemo&&) noexcept = default;
+    ThreadedDemo(ThreadedDemo&&) noexcept = delete;
+    ThreadedDemo& operator=(ThreadedDemo&&) noexcept = delete;
 
     /**
      * @brief Runs the multithreaded events demonstration.

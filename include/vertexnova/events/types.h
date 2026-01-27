@@ -25,7 +25,8 @@ inline constexpr int kNumMouseButtonStates = 12;
 /// Bit manipulation helper
 template<typename T>
 constexpr T bit(T x) noexcept {
-    return static_cast<T>(1) << x;
+    const T one = static_cast<T>(1);
+    return static_cast<T>(one << static_cast<T>(x));
 }
 
 /// Timestamp type for events

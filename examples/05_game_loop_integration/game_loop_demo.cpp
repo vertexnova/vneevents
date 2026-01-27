@@ -48,7 +48,6 @@ void GameLoopDemo::run() {
 
 void GameLoopDemo::simulateGameLoop(int num_frames) {
     const float frame_time = 1.0f / 60.0f;  // 60 FPS
-    auto start_time = std::chrono::steady_clock::now();
 
     for (int frame = 0; frame < num_frames && running_; ++frame) {
         frame_count_ = frame + 1;
