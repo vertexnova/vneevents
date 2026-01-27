@@ -234,11 +234,17 @@ if [ "$ACTION" = "xcode" ] || [ "$ACTION" = "xcode_build" ]; then
   GENERATE_XCODE=true
 fi
 
-# Determine compiler version
+# Determine compiler version and full paths (CMake requires full paths when run from build dir)
 if [ "$COMPILER" = "clang" ]; then
-  COMPILER_VERSION=$(clang --version | head -n 1 | awk '{print $4}' | sed 's/(.*)//')
-  if [ "$COMPILER_VERSION" = "version" ]; then
-    COMPILER_VERSION=$(clang --version | head -n 1 | awk '{print $3}')
+  COMPILER_VERSION=$(clang --version 2>/dev/null | head -n 1 | awk '{print $4}' | sed 's/(.*)//' | tr -d ' ')
+  if [ -z "$COMPILER_VERSION" ] || [ "$COMPILER_VERSION" = "version" ]; then
+    COMPILER_VERSION=$(clang --version 2>/dev/null | head -n 1 | awk '{print $3}')
+  fi
+  CC_PATH=$(command -v clang 2>/dev/null || which clang 2>/dev/null)
+  CXX_PATH=$(command -v clang++ 2>/dev/null || which clang++ 2>/dev/null)
+  if [ -z "$CC_PATH" ] || [ -z "$CXX_PATH" ]; then
+    echo "Error: clang/clang++ not found in PATH"
+    exit 1
   fi
 else
   echo "Unsupported compiler: $COMPILER"
@@ -257,15 +263,15 @@ else
   BUILD_DIR="$PROJECT_ROOT/build/${BUILD_TYPE}/build-macos-$COMPILER-${COMPILER_VERSION}"
 fi
 
-# Build CMake command
+# Build CMake command (use full compiler paths so CMake does not resolve relative to build dir)
 build_cmake_command() {
   local base_cmd=""
 
   # Choose generator based on Xcode flag
   if [ "$GENERATE_XCODE" = true ]; then
-    base_cmd="cmake -G Xcode -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON"
+    base_cmd="cmake -G Xcode -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=${CC_PATH} -DCMAKE_CXX_COMPILER=${CXX_PATH} -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON"
   else
-    base_cmd="cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON"
+    base_cmd="cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=${CC_PATH} -DCMAKE_CXX_COMPILER=${CXX_PATH} -DCMAKE_OSX_DEPLOYMENT_TARGET=13.3 -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON"
   fi
 
   echo "$base_cmd $PROJECT_ROOT"

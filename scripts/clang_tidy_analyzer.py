@@ -378,24 +378,34 @@ def run_clang_tidy(files: list, folder_name: str, verbose: bool = False, save_ra
     # Define report files
     json_report = report_dir / 'clang-tidy-report.json'
 
-    # Build clang-tidy command
+    # Build clang-tidy command (use project .clang-tidy when present)
     cmd = [
         'clang-tidy',
-        '--checks=*',  # Enable all checks
         '--header-filter=.*',  # Check headers too
         '--quiet',  # Suppress warnings about missing compilation database
         '--format-style=file',  # Use .clang-format for formatting
         f'--export-fixes={report_dir}/clang-tidy-fixes.yaml'  # Export fixes
     ]
+    # Use project .clang-tidy; if not found, enable common checks
+    clang_tidy_cfg = project_root / '.clang-tidy'
+    if not clang_tidy_cfg.exists():
+        cmd.insert(1, '--checks=*')
 
-    # Add compilation database if available
+    # Add compilation database if available (search build/ and build/<type>/<dir>/)
     compile_commands = project_root / 'build' / 'compile_commands.json'
+    if not compile_commands.exists():
+        build_dir = project_root / 'build'
+        if build_dir.exists():
+            for path in build_dir.rglob('compile_commands.json'):
+                compile_commands = path
+                break
     if compile_commands.exists():
-        cmd.extend(['-p', str(project_root / 'build')])
-        print("Using compilation database from build/compile_commands.json")
+        db_dir = str(compile_commands.parent)
+        cmd.extend(['-p', db_dir])
+        print(f"Using compilation database: {compile_commands.relative_to(project_root)}")
     else:
         print("Warning: No compilation database found. Some checks may not work properly.")
-        print("Consider building the project first to generate compile_commands.json")
+        print("Consider building the project first (e.g. ./scripts/build_macos.sh) to generate compile_commands.json")
 
     # Add all files
     cmd.extend(files)

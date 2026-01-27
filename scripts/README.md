@@ -204,6 +204,29 @@ build/
     └── ...
 ```
 
+## Static Analysis (clang-tidy)
+
+Run clang-tidy using the project’s `.clang-tidy` config. A build must exist so `compile_commands.json` is available (the script looks under `build/` for it).
+
+```bash
+# Build first (so compile_commands.json is generated)
+./scripts/build_macos.sh   # or build_linux.sh, etc.
+
+# Run clang-tidy on library and tests
+python scripts/clang_tidy_analyzer.py include
+python scripts/clang_tidy_analyzer.py src
+python scripts/clang_tidy_analyzer.py tests
+
+# Run on examples
+python scripts/clang_tidy_analyzer.py examples
+
+# Or use the combined static analyzer (clang-tidy only)
+python scripts/static_analyzer.py src --clang-tidy-only
+python scripts/static_analyzer.py examples --clang-tidy-only
+```
+
+Reports are written under `build/clang-tidy-reports/`. The script locates `compile_commands.json` under `build/` or any `build/<type>/<dir>/` automatically.
+
 ## Notes
 
 - All scripts support interactive mode with `-interactive` flag

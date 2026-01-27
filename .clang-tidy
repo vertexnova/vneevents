@@ -29,7 +29,7 @@ Checks: >
 
 WarningsAsErrors: ''
 
-HeaderFilterRegex: 'src/vertexnova/.*'
+HeaderFilterRegex: '(src/vertexnova/.*|include/vertexnova/.*|examples/.*)'
 
 CheckOptions:
   # Classes/Structs: PascalCase (no suffix)
