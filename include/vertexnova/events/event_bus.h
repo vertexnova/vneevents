@@ -60,13 +60,21 @@ class EventBus {
      *
      * This function processes all events in the given queue, dispatching
      * each event to the registered listeners.
+     *
+     * @note This function processes events until the queue is empty.
+     *       If events are added concurrently while processing, they will
+     *       be processed in subsequent iterations.
      */
     void processEvents(EventQueue& event_queue) {
-        while (!event_queue.empty()) {
+        // Process events until queue is empty
+        // Use pop() which returns nullptr when empty, avoiding race condition
+        // between empty() check and pop()
+        while (true) {
             auto event = event_queue.pop();
-            if (event) {
-                dispatcher_.dispatch(*event);
+            if (!event) {
+                break;  // Queue is empty
             }
+            dispatcher_.dispatch(*event);
         }
     }
 
