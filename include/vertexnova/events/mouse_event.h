@@ -14,6 +14,7 @@
 #include "types.h"
 
 #include <sstream>
+#include <cstdint>
 
 namespace vne::events {
 
@@ -24,16 +25,19 @@ namespace vne::events {
 class MouseButtonEvent : public Event {
    public:
     [[nodiscard]] MouseButton button() const noexcept { return button_; }
+    [[nodiscard]] uint8_t modifiers() const noexcept { return modifiers_; }
 
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eMouseButton | EventCategory::eInput; }
 
    protected:
-    MouseButtonEvent(EventType type, MouseButton button)
+    MouseButtonEvent(EventType type, MouseButton button, uint8_t modifiers = 0)
         : Event(type)
-        , button_(button) {}
+        , button_(button)
+        , modifiers_(modifiers) {}
 
    private:
     MouseButton button_;
+    uint8_t modifiers_;
 };
 
 /**
@@ -42,8 +46,8 @@ class MouseButtonEvent : public Event {
  */
 class MouseButtonPressedEvent : public MouseButtonEvent {
    public:
-    explicit MouseButtonPressedEvent(MouseButton button)
-        : MouseButtonEvent(EventType::eMouseButtonPressed, button) {}
+    explicit MouseButtonPressedEvent(MouseButton button, uint8_t modifiers = 0)
+        : MouseButtonEvent(EventType::eMouseButtonPressed, button, modifiers) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonPressed"; }
 
@@ -60,8 +64,8 @@ class MouseButtonPressedEvent : public MouseButtonEvent {
  */
 class MouseButtonReleasedEvent : public MouseButtonEvent {
    public:
-    explicit MouseButtonReleasedEvent(MouseButton button)
-        : MouseButtonEvent(EventType::eMouseButtonReleased, button) {}
+    explicit MouseButtonReleasedEvent(MouseButton button, uint8_t modifiers = 0)
+        : MouseButtonEvent(EventType::eMouseButtonReleased, button, modifiers) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonReleased"; }
 
@@ -78,13 +82,15 @@ class MouseButtonReleasedEvent : public MouseButtonEvent {
  */
 class MouseMovedEvent : public Event {
    public:
-    MouseMovedEvent(double x_pos, double y_pos)
+    MouseMovedEvent(double x_pos, double y_pos, uint8_t modifiers = 0)
         : Event(EventType::eMouseMoved)
         , x_(x_pos)
-        , y_(y_pos) {}
+        , y_(y_pos)
+        , modifiers_(modifiers) {}
 
     [[nodiscard]] double x() const noexcept { return x_; }
     [[nodiscard]] double y() const noexcept { return y_; }
+    [[nodiscard]] uint8_t modifiers() const noexcept { return modifiers_; }
 
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eMouse | EventCategory::eInput; }
 
@@ -99,6 +105,7 @@ class MouseMovedEvent : public Event {
    private:
     double x_;
     double y_;
+    uint8_t modifiers_;
 };
 
 /**

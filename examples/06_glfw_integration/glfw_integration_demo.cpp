@@ -16,6 +16,7 @@
 #include <vertexnova/logging/logging.h>
 
 #include <glad/glad.h>
+#include <string>
 
 namespace {
 CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.glfw_integration")
@@ -24,6 +25,23 @@ CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.glfw_integration")
 namespace vne::events::examples {
 
 namespace {
+
+const char* modifierString(uint8_t mods) {
+    using vne::events::ModifierKey;
+    if (mods == 0)
+        return "none";
+    static thread_local std::string buf;
+    buf.clear();
+    if (mods & static_cast<uint8_t>(ModifierKey::eModShift))
+        buf += "Shift";
+    if (mods & static_cast<uint8_t>(ModifierKey::eModCtrl))
+        buf += (buf.empty() ? "" : "|") + std::string("Ctrl");
+    if (mods & static_cast<uint8_t>(ModifierKey::eModAlt))
+        buf += (buf.empty() ? "" : "|") + std::string("Alt");
+    if (mods & static_cast<uint8_t>(ModifierKey::eModSuper))
+        buf += (buf.empty() ? "" : "|") + std::string("Super");
+    return buf.empty() ? "none" : buf.c_str();
+}
 
 class GlfwEventLogger : public vne::events::EventListener {
    public:
@@ -42,28 +60,48 @@ class GlfwEventLogger : public vne::events::EventListener {
             }
             case EventType::eKeyPressed: {
                 const auto& e = static_cast<const vne::events::KeyPressedEvent&>(event);
-                VNE_LOG_INFO << "  [Event] Key pressed: " << static_cast<int>(e.keyCode());
+                VNE_LOG_INFO << "  [Event] Key pressed: " << static_cast<int>(e.keyCode())
+                             << " mods=" << modifierString(e.modifiers());
                 if (e.keyCode() == vne::events::KeyCode::eEscape) *running_ = false;
                 break;
             }
             case EventType::eKeyReleased: {
                 const auto& e = static_cast<const vne::events::KeyReleasedEvent&>(event);
-                VNE_LOG_INFO << "  [Event] Key released: " << static_cast<int>(e.keyCode());
+                VNE_LOG_INFO << "  [Event] Key released: " << static_cast<int>(e.keyCode())
+                             << " mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eMouseMoved: {
                 const auto& e = static_cast<const vne::events::MouseMovedEvent&>(event);
-                VNE_LOG_INFO << "  [Event] Mouse moved: (" << e.x() << ", " << e.y() << ")";
+                VNE_LOG_INFO << "  [Event] Mouse moved: (" << e.x() << ", " << e.y()
+                             << ") mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eMouseButtonPressed: {
                 const auto& e = static_cast<const vne::events::MouseButtonPressedEvent&>(event);
-                VNE_LOG_INFO << "  [Event] Mouse button pressed: " << static_cast<int>(e.button());
+                VNE_LOG_INFO << "  [Event] Mouse button pressed: " << static_cast<int>(e.button())
+                             << " mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eMouseButtonReleased: {
                 const auto& e = static_cast<const vne::events::MouseButtonReleasedEvent&>(event);
-                VNE_LOG_INFO << "  [Event] Mouse button released: " << static_cast<int>(e.button());
+                VNE_LOG_INFO << "  [Event] Mouse button released: " << static_cast<int>(e.button())
+                             << " mods=" << modifierString(e.modifiers());
+                break;
+            }
+            case EventType::eTouchPress: {
+                const auto& e = static_cast<const vne::events::TouchPressEvent&>(event);
+                VNE_LOG_INFO << "  [Event] Touch press: id=" << e.touchId() << " (" << e.x() << ", " << e.y() << ")";
+                break;
+            }
+            case EventType::eTouchRelease: {
+                const auto& e = static_cast<const vne::events::TouchReleaseEvent&>(event);
+                VNE_LOG_INFO << "  [Event] Touch release: id=" << e.touchId() << " (" << e.x() << ", " << e.y() << ")";
+                break;
+            }
+            case EventType::eTouchMove: {
+                const auto& e = static_cast<const vne::events::TouchMoveEvent&>(event);
+                VNE_LOG_INFO << "  [Event] Touch move: id=" << e.touchId() << " (" << e.x() << ", " << e.y() << ")";
                 break;
             }
             default:
@@ -89,7 +127,8 @@ void GlfwIntegrationDemo::run() {
         return;
     }
 
-    VNE_LOG_INFO << "  Window open. Use keys (W,A,S,D,Space), mouse, resize; ESC or close to exit.";
+    VNE_LOG_INFO << "  Window open. Keys (W,A,S,D,Space), mouse, resize; ESC or close to exit.";
+    VNE_LOG_INFO << "  Touch: LMB mimics touch (id=0). Hold Shift/Ctrl/Alt/Super and use mouse or keys to test modifiers.";
     VNE_LOG_INFO << "";
 
     bool running = true;
@@ -103,6 +142,9 @@ void GlfwIntegrationDemo::run() {
     manager.registerListener(ET::eMouseMoved, logger);
     manager.registerListener(ET::eMouseButtonPressed, logger);
     manager.registerListener(ET::eMouseButtonReleased, logger);
+    manager.registerListener(ET::eTouchPress, logger);
+    manager.registerListener(ET::eTouchRelease, logger);
+    manager.registerListener(ET::eTouchMove, logger);
 
     int frame = 0;
     while (running && !glfw->shouldClose()) {

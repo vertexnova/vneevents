@@ -14,8 +14,48 @@
 #include <vertexnova/logging/logging.h>
 
 namespace {
-CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.glfw_integration")
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.glfw_integration");
+
+
+uint8_t glfwModsToModifierKey(int mods) {
+    uint8_t out = 0;
+    if (mods & GLFW_MOD_SHIFT) {
+        out |= static_cast<uint8_t>(vne::events::ModifierKey::eModShift);
+    }
+    if (mods & GLFW_MOD_CONTROL) {
+        out |= static_cast<uint8_t>(vne::events::ModifierKey::eModCtrl);
+    }
+    if (mods & GLFW_MOD_ALT) {
+        out |= static_cast<uint8_t>(vne::events::ModifierKey::eModAlt);
+    }
+    if (mods & GLFW_MOD_SUPER) {
+        out |= static_cast<uint8_t>(vne::events::ModifierKey::eModSuper);
+    }
+    return out;
 }
+
+uint8_t glfwQueryModifiers(GLFWwindow* w) {
+    int mods = 0;
+    if (glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
+        || glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+        mods |= GLFW_MOD_SHIFT;
+    }
+    if (glfwGetKey(w, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS
+        || glfwGetKey(w, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
+        mods |= GLFW_MOD_CONTROL;
+    }
+    if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS
+        || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
+        mods |= GLFW_MOD_ALT;
+    }
+    if (glfwGetKey(w, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS
+        || glfwGetKey(w, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS) {
+        mods |= GLFW_MOD_SUPER;
+    }
+    return glfwModsToModifierKey(mods);
+}
+
+} // namespace
 
 namespace vne::events::examples {
 
@@ -79,13 +119,15 @@ bool GLFWIntegration::shouldClose() const {
 }
 
 void GLFWIntegration::pollEvents() {
-    if (window_)
+    if (window_) {
         glfwPollEvents();
+    }
 }
 
 void GLFWIntegration::swapBuffers() {
-    if (window_)
+    if (window_) {
         glfwSwapBuffers(window_);
+    }
 }
 
 void GLFWIntegration::shutdown() {
@@ -101,61 +143,81 @@ void GLFWIntegration::shutdown() {
 
 void GLFWIntegration::keyCallback(GLFWwindow* w, int key, int scancode, int action, int mods) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr)
+    if (i != nullptr) {
         i->handleKeyEvent(key, scancode, action, mods);
+    }
 }
 
 void GLFWIntegration::mouseButtonCallback(GLFWwindow* w, int button, int action, int mods) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr)
-        i->handleMouseButton(button, action, mods);
+    if (i != nullptr) {
+        i->handleMouseButton(w, button, action, mods);
+    }
 }
 
 void GLFWIntegration::mouseMoveCallback(GLFWwindow* w, double xpos, double ypos) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr)
-        i->handleMouseMove(xpos, ypos);
+    if (i != nullptr) {
+        i->handleMouseMove(w, xpos, ypos);
+    }
 }
 
 void GLFWIntegration::windowResizeCallback(GLFWwindow* w, int width, int height) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr)
+    if (i != nullptr) {
         i->handleWindowResize(width, height);
+    }
 }
 
 void GLFWIntegration::windowCloseCallback(GLFWwindow* w) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
-    if (i != nullptr)
+    if (i != nullptr) {
         i->handleWindowClose();
+    }
 }
 
-void GLFWIntegration::handleKeyEvent(int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods) {
+void GLFWIntegration::handleKeyEvent(int key, int /* scancode */, int action, int mods) {
     vne::events::KeyCode k = glfwKeyToKeyCode(key);
+    const uint8_t m = glfwModsToModifierKey(mods);
     if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-        event_manager_.pushEvent(std::make_unique<vne::events::KeyPressedEvent>(k));
+        event_manager_.pushEvent(std::make_unique<vne::events::KeyPressedEvent>(k, m));
         vne::events::Input::updateKeyState(static_cast<int>(k), true);
         if (key == GLFW_KEY_ESCAPE)
             glfwSetWindowShouldClose(window_, GLFW_TRUE);
     } else if (action == GLFW_RELEASE) {
-        event_manager_.pushEvent(std::make_unique<vne::events::KeyReleasedEvent>(k));
+        event_manager_.pushEvent(std::make_unique<vne::events::KeyReleasedEvent>(k, m));
         vne::events::Input::updateKeyState(static_cast<int>(k), false);
     }
 }
 
-void GLFWIntegration::handleMouseButton(int button, int action, [[maybe_unused]] int mods) {
+void GLFWIntegration::handleMouseButton(GLFWwindow* window, int button, int action, int mods) {
     vne::events::MouseButton b = glfwButtonToMouseButton(button);
+    const uint8_t m = glfwModsToModifierKey(mods);
     if (action == GLFW_PRESS) {
-        event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonPressedEvent>(b));
+        event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonPressedEvent>(b, m));
         vne::events::Input::updateMouseButtonState(static_cast<int>(b), true);
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            double x = 0, y = 0;
+            glfwGetCursorPos(window, &x, &y);
+            event_manager_.pushEvent(std::make_unique<vne::events::TouchPressEvent>(0, x, y));
+        }
     } else if (action == GLFW_RELEASE) {
-        event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonReleasedEvent>(b));
+        event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonReleasedEvent>(b, m));
         vne::events::Input::updateMouseButtonState(static_cast<int>(b), false);
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            double x = 0, y = 0;
+            glfwGetCursorPos(window, &x, &y);
+            event_manager_.pushEvent(std::make_unique<vne::events::TouchReleaseEvent>(0, x, y));
+        }
     }
 }
 
-void GLFWIntegration::handleMouseMove(double x, double y) {
-    event_manager_.pushEvent(std::make_unique<vne::events::MouseMovedEvent>(x, y));
+void GLFWIntegration::handleMouseMove(GLFWwindow* window, double x, double y) {
+    const uint8_t m = glfwQueryModifiers(window);
+    event_manager_.pushEvent(std::make_unique<vne::events::MouseMovedEvent>(x, y, m));
     vne::events::Input::updateMousePosition(static_cast<int>(x), static_cast<int>(y));
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+        event_manager_.pushEvent(std::make_unique<vne::events::TouchMoveEvent>(0, x, y));
 }
 
 void GLFWIntegration::handleWindowResize(int width, int height) {
