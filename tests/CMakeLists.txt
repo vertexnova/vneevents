@@ -23,14 +23,14 @@ endif()
 #==============================================================================
 
 # Use external googletest submodule (v1.17.0)
-if(EXISTS "${CMAKE_SOURCE_DIR}/external/googletest/CMakeLists.txt")
-    message(STATUS "Using Google Test from external/googletest (v1.17.0)")
-    add_subdirectory(${CMAKE_SOURCE_DIR}/external/googletest ${CMAKE_BINARY_DIR}/external/googletest)
+if(EXISTS "${CMAKE_SOURCE_DIR}/deps/external/googletest/CMakeLists.txt")
+    message(STATUS "Using Google Test from deps/external/googletest (v1.17.0)")
+    add_subdirectory(${CMAKE_SOURCE_DIR}/deps/external/googletest ${CMAKE_BINARY_DIR}/deps/external/googletest)
     include(GoogleTest)
     set(GTEST_LIBRARIES gtest_main gmock)
     set(GTEST_INCLUDE_DIRS
-        ${CMAKE_SOURCE_DIR}/external/googletest/googletest/include
-        ${CMAKE_SOURCE_DIR}/external/googletest/googlemock/include
+        ${CMAKE_SOURCE_DIR}/deps/external/googletest/googletest/include
+        ${CMAKE_SOURCE_DIR}/deps/external/googletest/googlemock/include
     )
 else()
     # Try to find GoogleTest in system
@@ -41,7 +41,7 @@ else()
         set(GTEST_INCLUDE_DIRS ${GTEST_INCLUDE_DIRS})
     else()
         # Fallback to FetchContent
-        message(STATUS "external/googletest not found, using FetchContent")
+        message(STATUS "deps/external/googletest not found, using FetchContent")
         include(FetchContent)
         FetchContent_Declare(
             googletest
