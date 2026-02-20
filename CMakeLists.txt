@@ -22,22 +22,22 @@ set(CMAKE_CXX_EXTENSIONS False)
 #==============================================================================
 # Add custom CMake modules path
 #==============================================================================
-if(EXISTS "${PROJECT_SOURCE_DIR}/cmake/vnecmake/modules")
-    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/vnecmake/modules")
+if(EXISTS "${PROJECT_SOURCE_DIR}/deps/external/vnecmake/modules")
+    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/deps/external/vnecmake/modules")
 endif()
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 #==============================================================================
 # Internal Libraries
 #==============================================================================
-set(VNE_LIBS_DIR ${PROJECT_SOURCE_DIR}/libs)
+set(VNE_LIBS_DIR ${PROJECT_SOURCE_DIR}/deps/internal)
 
 if(NOT TARGET vne::common)
     if(EXISTS "${VNE_LIBS_DIR}/vnecommon/CMakeLists.txt")
         # vnecommon is header-only; we don't need its example executable
         set(VNEEVENTS_BUILD_EXAMPLES ${BUILD_EXAMPLES})
         set(BUILD_EXAMPLES OFF)
-        add_subdirectory(libs/vnecommon)
+        add_subdirectory(deps/internal/vnecommon)
         set(BUILD_EXAMPLES ${VNEEVENTS_BUILD_EXAMPLES})
     endif()
 endif()
@@ -45,19 +45,19 @@ endif()
 # VneLogging - v1.0.0
 if(NOT TARGET vne::logging)
     if(EXISTS "${VNE_LIBS_DIR}/vnelogging/CMakeLists.txt")
-        message(STATUS "Using VneLogging from libs/vnelogging (v1.0.0)")
+        message(STATUS "Using VneLogging from deps/internal/vnelogging (v1.0.0)")
         # Save current BUILD_TESTS and BUILD_EXAMPLES values
         set(VNEEVENTS_BUILD_TESTS ${BUILD_TESTS})
         set(VNEEVENTS_BUILD_EXAMPLES ${BUILD_EXAMPLES})
         # Disable vnelogging tests and examples to avoid conflicts
         set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-        add_subdirectory(${VNE_LIBS_DIR}/vnelogging ${CMAKE_BINARY_DIR}/libs/vnelogging)
+        add_subdirectory(${VNE_LIBS_DIR}/vnelogging ${CMAKE_BINARY_DIR}/deps/internal/vnelogging)
         # Restore BUILD_TESTS and BUILD_EXAMPLES for vneevents
         set(BUILD_TESTS ${VNEEVENTS_BUILD_TESTS} CACHE BOOL "Build the test suite" FORCE)
         set(BUILD_EXAMPLES ${VNEEVENTS_BUILD_EXAMPLES} CACHE BOOL "Build example programs" FORCE)
     else()
-        message(WARNING "VneLogging submodule not found at libs/vnelogging")
+        message(WARNING "VneLogging submodule not found at deps/internal/vnelogging")
     endif()
 endif()
 

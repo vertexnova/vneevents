@@ -19,8 +19,8 @@ coverage:
 ignore:
   - "tests/**/*"
   - "*_test.cpp"
-  - "external/**/*"
-  - "libs/**/*"
+  - "deps/external/**/*"
+  - "deps/internal/**/*"
   - "examples/**/*"
   - "_deps/**/*"
   - "cmake/**/*"

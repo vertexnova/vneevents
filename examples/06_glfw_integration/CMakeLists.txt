@@ -14,18 +14,18 @@ add_executable(example_06_glfw_integration
 )
 
 # GLFW
-if(EXISTS "${PROJECT_SOURCE_DIR}/external/glfw/CMakeLists.txt")
-    add_subdirectory(${PROJECT_SOURCE_DIR}/external/glfw ${CMAKE_BINARY_DIR}/external/glfw)
+if(EXISTS "${PROJECT_SOURCE_DIR}/deps/external/glfw/CMakeLists.txt")
+    add_subdirectory(${PROJECT_SOURCE_DIR}/deps/external/glfw ${CMAKE_BINARY_DIR}/deps/external/glfw)
     set(GLFW_FOUND TRUE)
 else()
-    message(WARNING "GLFW submodule not found at external/glfw")
+    message(WARNING "GLFW submodule not found at deps/external/glfw")
     set(GLFW_FOUND FALSE)
 endif()
 
 # GLAD
 set(GLAD_TARGET "")
 if(NOT TARGET glad::glad AND NOT TARGET vne::opengl::glad)
-    if(EXISTS "${PROJECT_SOURCE_DIR}/libs/opengl-glad/CMakeLists.txt")
+    if(EXISTS "${PROJECT_SOURCE_DIR}/deps/internal/opengl-glad/CMakeLists.txt")
         set(GLAD_ENABLE_GL ON)
         set(GLAD_ENABLE_GLES3 OFF)
         if(APPLE)
@@ -42,8 +42,8 @@ if(NOT TARGET glad::glad AND NOT TARGET vne::opengl::glad)
             set(GLAD_ENABLE_WGL OFF)
         endif()
         add_subdirectory(
-            ${PROJECT_SOURCE_DIR}/libs/opengl-glad
-            ${CMAKE_BINARY_DIR}/libs/opengl-glad
+            ${PROJECT_SOURCE_DIR}/deps/internal/opengl-glad
+            ${CMAKE_BINARY_DIR}/deps/internal/opengl-glad
         )
         if(TARGET glad::glad)
             set(GLAD_TARGET glad::glad)
