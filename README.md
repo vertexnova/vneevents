@@ -101,6 +101,7 @@ Input::nextFrame();  // call once per frame
 | `KeyTypedEvent` | `eKeyTyped` | Keyboard, Input |
 | `MouseButtonPressedEvent` | `eMouseButtonPressed` | MouseButton, Input |
 | `MouseButtonReleasedEvent` | `eMouseButtonReleased` | MouseButton, Input |
+| `MouseButtonDoubleClickedEvent` | `eMouseButtonDoubleClicked` | MouseButton, Input |
 | `MouseMovedEvent` | `eMouseMoved` | Mouse, Input |
 | `MouseScrolledEvent` | `eMouseScrolled` | Mouse, Input |
 | `WindowCloseEvent` | `eWindowClose` | Window |

@@ -78,7 +78,7 @@ Common event types include:
 
 - `eWindowClose`, `eWindowResize`, `eWindowFocus`
 - `eKeyPressed`, `eKeyReleased`, `eKeyTyped`
-- `eMouseButtonPressed`, `eMouseMoved`, `eMouseScrolled`
+- `eMouseButtonPressed`, `eMouseButtonReleased`, `eMouseButtonDoubleClicked`, `eMouseMoved`, `eMouseScrolled`
 - `eTouchBegan`, `eTouchMoved`, `eTouchEnded`
 
 ## Usage Examples

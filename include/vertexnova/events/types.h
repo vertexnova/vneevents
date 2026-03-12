@@ -52,11 +52,12 @@ enum class EventType : uint8_t {
     eKeyTyped = 6,
     eMouseButtonPressed = 7,
     eMouseButtonReleased = 8,
-    eMouseMoved = 9,
-    eMouseScrolled = 10,
-    eTouchPress = 11,
-    eTouchRelease = 12,
-    eTouchMove = 13
+    eMouseButtonDoubleClicked = 9,
+    eMouseMoved = 10,
+    eMouseScrolled = 11,
+    eTouchPress = 12,
+    eTouchRelease = 13,
+    eTouchMove = 14
 };
 
 /**

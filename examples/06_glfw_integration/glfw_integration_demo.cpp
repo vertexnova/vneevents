@@ -94,6 +94,14 @@ class GlfwEventLogger : public vne::events::EventListener {
                              << pos.str() << " mods=" << modifierString(e.modifiers());
                 break;
             }
+            case EventType::eMouseButtonDoubleClicked: {
+                const auto& e = static_cast<const vne::events::MouseButtonDoubleClickedEvent&>(event);
+                std::ostringstream pos;
+                if (e.hasPosition()) { pos << " at (" << e.x() << ", " << e.y() << ")"; }
+                VNE_LOG_INFO << "  [Event] Mouse button double-clicked: " << static_cast<int>(e.button())
+                             << pos.str() << " mods=" << modifierString(e.modifiers());
+                break;
+            }
             case EventType::eTouchPress: {
                 const auto& e = static_cast<const vne::events::TouchPressEvent&>(event);
                 VNE_LOG_INFO << "  [Event] Touch press: id=" << e.touchId() << " (" << e.x() << ", " << e.y() << ")";
@@ -147,6 +155,7 @@ void GlfwIntegrationDemo::run() {
     manager.registerListener(ET::eMouseMoved, logger);
     manager.registerListener(ET::eMouseButtonPressed, logger);
     manager.registerListener(ET::eMouseButtonReleased, logger);
+    manager.registerListener(ET::eMouseButtonDoubleClicked, logger);
     manager.registerListener(ET::eTouchPress, logger);
     manager.registerListener(ET::eTouchRelease, logger);
     manager.registerListener(ET::eTouchMove, logger);

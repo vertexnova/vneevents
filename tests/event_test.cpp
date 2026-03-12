@@ -132,6 +132,32 @@ TEST(MouseEventTest, MouseButtonReleasedToStringOmitsPositionWhenUnknown) {
     EXPECT_EQ(event.toString().find(" at ("), std::string::npos);
 }
 
+TEST(MouseEventTest, MouseButtonDoubleClicked) {
+    MouseButtonDoubleClickedEvent event(MouseButton::eLeft);
+
+    EXPECT_EQ(event.type(), EventType::eMouseButtonDoubleClicked);
+    EXPECT_EQ(event.button(), MouseButton::eLeft);
+    EXPECT_FALSE(event.hasPosition());
+    EXPECT_TRUE(std::isnan(event.x()));
+    EXPECT_TRUE(std::isnan(event.y()));
+}
+
+TEST(MouseEventTest, MouseButtonDoubleClickedWithPosition) {
+    MouseButtonDoubleClickedEvent event(MouseButton::eLeft, 0, 12.5, 34.75);
+
+    EXPECT_EQ(event.button(), MouseButton::eLeft);
+    EXPECT_TRUE(event.hasPosition());
+    EXPECT_DOUBLE_EQ(event.x(), 12.5);
+    EXPECT_DOUBLE_EQ(event.y(), 34.75);
+    EXPECT_NE(event.toString().find(" at (12.5, 34.75)"), std::string::npos);
+}
+
+TEST(MouseEventTest, MouseButtonDoubleClickedToStringOmitsPositionWhenUnknown) {
+    MouseButtonDoubleClickedEvent event(MouseButton::eLeft);
+    EXPECT_FALSE(event.hasPosition());
+    EXPECT_EQ(event.toString().find(" at ("), std::string::npos);
+}
+
 TEST(MouseEventTest, MouseMoved) {
     MouseMovedEvent event(100.5, 200.5);
 
