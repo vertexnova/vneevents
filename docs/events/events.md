@@ -50,7 +50,7 @@ The foundation of the event system, providing a common interface for all events.
 - **Window Events**: Window resize, close, focus, etc.
 - **Key Events**: Key press, release, repeat
 - **Mouse Events**: Mouse move, button press/release, scroll
-- **Touch Events**: Touch begin, move, end, cancel
+- **Touch Events**: Touch press, move, release
 
 ### Event Management
 
@@ -79,7 +79,7 @@ Common event types include:
 - `eWindowClose`, `eWindowResize`, `eWindowFocus`
 - `eKeyPressed`, `eKeyReleased`, `eKeyTyped`
 - `eMouseButtonPressed`, `eMouseButtonReleased`, `eMouseButtonDoubleClicked`, `eMouseMoved`, `eMouseScrolled`
-- `eTouchBegan`, `eTouchMoved`, `eTouchEnded`
+- `eTouchPress`, `eTouchMove`, `eTouchRelease`
 
 ## Usage Examples
 

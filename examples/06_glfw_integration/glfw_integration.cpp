@@ -63,8 +63,8 @@ GLFWIntegration::GLFWIntegration(vne::events::EventManager& event_manager)
     : event_manager_(event_manager)
     , window_(nullptr)
     , initialized_(false) {
-    // Initialize double-click tracking state
-    last_click_time_.fill(0.0);
+    // Initialize double-click tracking state (-1.0 = no previous click; first click never double)
+    last_click_time_.fill(-1.0);
     last_click_x_.fill(0.0);
     last_click_y_.fill(0.0);
 }
@@ -205,19 +205,21 @@ void GLFWIntegration::handleMouseButton(GLFWwindow* window, int button, int acti
     const int idx = button;
     if (action == GLFW_PRESS && idx >= 0 && idx <= GLFW_MOUSE_BUTTON_LAST) {
         const double now = glfwGetTime();
-        const double dt = now - last_click_time_[idx];
-        const double dx = x - last_click_x_[idx];
-        const double dy = y - last_click_y_[idx];
-        const double dist2 = dx * dx + dy * dy;
-
-        if (dt > 0.0 && dt <= kDoubleClickMaxIntervalSeconds_ &&
-            dist2 <= kDoubleClickMaxDistancePixels_ * kDoubleClickMaxDistancePixels_) {
-            is_double_click = true;
+        const std::size_t i = static_cast<std::size_t>(idx);
+        // Only attempt double-click detection if we have a valid previous click time.
+        if (last_click_time_[i] >= 0.0) {
+            const double dt = now - last_click_time_[i];
+            const double dx = x - last_click_x_[i];
+            const double dy = y - last_click_y_[i];
+            const double dist2 = dx * dx + dy * dy;
+            if (dt > 0.0 && dt <= kDoubleClickMaxIntervalSeconds_ &&
+                dist2 <= kDoubleClickMaxDistancePixels_ * kDoubleClickMaxDistancePixels_) {
+                is_double_click = true;
+            }
         }
-
-        last_click_time_[idx] = now;
-        last_click_x_[idx] = x;
-        last_click_y_[idx] = y;
+        last_click_time_[i] = now;
+        last_click_x_[i] = x;
+        last_click_y_[i] = y;
     }
 
     if (action == GLFW_PRESS) {
