@@ -80,13 +80,13 @@ class GlfwEventLogger : public vne::events::EventListener {
             case EventType::eMouseButtonPressed: {
                 const auto& e = static_cast<const vne::events::MouseButtonPressedEvent&>(event);
                 VNE_LOG_INFO << "  [Event] Mouse button pressed: " << static_cast<int>(e.button())
-                             << " mods=" << modifierString(e.modifiers());
+                             << " at (" << e.x() << ", " << e.y() << ") mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eMouseButtonReleased: {
                 const auto& e = static_cast<const vne::events::MouseButtonReleasedEvent&>(event);
                 VNE_LOG_INFO << "  [Event] Mouse button released: " << static_cast<int>(e.button())
-                             << " mods=" << modifierString(e.modifiers());
+                             << " at (" << e.x() << ", " << e.y() << ") mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eTouchPress: {

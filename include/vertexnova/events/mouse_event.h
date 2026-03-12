@@ -26,18 +26,24 @@ class MouseButtonEvent : public Event {
    public:
     [[nodiscard]] MouseButton button() const noexcept { return button_; }
     [[nodiscard]] uint8_t modifiers() const noexcept { return modifiers_; }
+    [[nodiscard]] double x() const noexcept { return x_; }
+    [[nodiscard]] double y() const noexcept { return y_; }
 
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eMouseButton | EventCategory::eInput; }
 
    protected:
-    MouseButtonEvent(EventType type, MouseButton button, uint8_t modifiers = 0)
+    MouseButtonEvent(EventType type, MouseButton button, uint8_t modifiers = 0, double x = 0, double y = 0)
         : Event(type)
         , button_(button)
-        , modifiers_(modifiers) {}
+        , modifiers_(modifiers)
+        , x_(x)
+        , y_(y) {}
 
    private:
     MouseButton button_;
     uint8_t modifiers_;
+    double x_;
+    double y_;
 };
 
 /**
@@ -46,14 +52,14 @@ class MouseButtonEvent : public Event {
  */
 class MouseButtonPressedEvent : public MouseButtonEvent {
    public:
-    explicit MouseButtonPressedEvent(MouseButton button, uint8_t modifiers = 0)
-        : MouseButtonEvent(EventType::eMouseButtonPressed, button, modifiers) {}
+    explicit MouseButtonPressedEvent(MouseButton button, uint8_t modifiers = 0, double x = 0, double y = 0)
+        : MouseButtonEvent(EventType::eMouseButtonPressed, button, modifiers, x, y) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonPressed"; }
 
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
-        ss << "MouseButtonPressedEvent: " << static_cast<int>(button());
+        ss << "MouseButtonPressedEvent: " << static_cast<int>(button()) << " at (" << x() << ", " << y() << ")";
         return ss.str();
     }
 };
@@ -64,14 +70,14 @@ class MouseButtonPressedEvent : public MouseButtonEvent {
  */
 class MouseButtonReleasedEvent : public MouseButtonEvent {
    public:
-    explicit MouseButtonReleasedEvent(MouseButton button, uint8_t modifiers = 0)
-        : MouseButtonEvent(EventType::eMouseButtonReleased, button, modifiers) {}
+    explicit MouseButtonReleasedEvent(MouseButton button, uint8_t modifiers = 0, double x = 0, double y = 0)
+        : MouseButtonEvent(EventType::eMouseButtonReleased, button, modifiers, x, y) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonReleased"; }
 
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
-        ss << "MouseButtonReleasedEvent: " << static_cast<int>(button());
+        ss << "MouseButtonReleasedEvent: " << static_cast<int>(button()) << " at (" << x() << ", " << y() << ")";
         return ss.str();
     }
 };

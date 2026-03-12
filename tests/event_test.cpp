@@ -84,7 +84,17 @@ TEST(MouseEventTest, MouseButtonPressed) {
 
     EXPECT_EQ(event.type(), EventType::eMouseButtonPressed);
     EXPECT_EQ(event.button(), MouseButton::eLeft);
+    EXPECT_DOUBLE_EQ(event.x(), 0.0);
+    EXPECT_DOUBLE_EQ(event.y(), 0.0);
     EXPECT_TRUE(event.isInCategory(EventCategory::eMouseButton));
+}
+
+TEST(MouseEventTest, MouseButtonPressedWithPosition) {
+    MouseButtonPressedEvent event(MouseButton::eLeft, 0, 42.5, 100.25);
+
+    EXPECT_EQ(event.button(), MouseButton::eLeft);
+    EXPECT_DOUBLE_EQ(event.x(), 42.5);
+    EXPECT_DOUBLE_EQ(event.y(), 100.25);
 }
 
 TEST(MouseEventTest, MouseButtonReleased) {
@@ -92,6 +102,16 @@ TEST(MouseEventTest, MouseButtonReleased) {
 
     EXPECT_EQ(event.type(), EventType::eMouseButtonReleased);
     EXPECT_EQ(event.button(), MouseButton::eRight);
+    EXPECT_DOUBLE_EQ(event.x(), 0.0);
+    EXPECT_DOUBLE_EQ(event.y(), 0.0);
+}
+
+TEST(MouseEventTest, MouseButtonReleasedWithPosition) {
+    MouseButtonReleasedEvent event(MouseButton::eRight, 0, 10.0, 20.0);
+
+    EXPECT_EQ(event.button(), MouseButton::eRight);
+    EXPECT_DOUBLE_EQ(event.x(), 10.0);
+    EXPECT_DOUBLE_EQ(event.y(), 20.0);
 }
 
 TEST(MouseEventTest, MouseMoved) {
