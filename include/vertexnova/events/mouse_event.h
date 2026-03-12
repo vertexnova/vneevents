@@ -13,6 +13,8 @@
 #include "event.h"
 #include "types.h"
 
+#include <cmath>
+#include <limits>
 #include <sstream>
 #include <cstdint>
 
@@ -21,39 +23,71 @@ namespace vne::events {
 /**
  * @class MouseButtonEvent
  * @brief Base class for mouse button events.
+ *
+ * Cursor position (x(), y()) is in **window/client coordinates**: origin at the
+ * top-left of the window content area, units in pixels. This matches common
+ * windowing APIs (e.g. GLFW content-area coordinates).
+ *
+ * When position is not available (e.g. synthetic events or backends that do not
+ * report it), x() and y() return NaN. Use hasPosition() before using coordinates;
+ * toString() omits the "at (x, y)" suffix when position was not supplied.
  */
 class MouseButtonEvent : public Event {
    public:
     [[nodiscard]] MouseButton button() const noexcept { return button_; }
     [[nodiscard]] uint8_t modifiers() const noexcept { return modifiers_; }
+    /** Cursor x in window/client coords (pixels); NaN if not provided. */
+    [[nodiscard]] double x() const noexcept { return x_; }
+    /** Cursor y in window/client coords (pixels); NaN if not provided. */
+    [[nodiscard]] double y() const noexcept { return y_; }
+    /** True if a real cursor position was supplied (x and y are not NaN). */
+    [[nodiscard]] bool hasPosition() const noexcept {
+        return !std::isnan(x_) && !std::isnan(y_);
+    }
 
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eMouseButton | EventCategory::eInput; }
 
    protected:
-    MouseButtonEvent(EventType type, MouseButton button, uint8_t modifiers = 0)
+    /** @param x Cursor x (pixels); NaN when not available. @param y Cursor y (pixels); NaN when not available. */
+    MouseButtonEvent(EventType type, MouseButton button, uint8_t modifiers = 0,
+                    double x = std::numeric_limits<double>::quiet_NaN(),
+                    double y = std::numeric_limits<double>::quiet_NaN())
         : Event(type)
         , button_(button)
-        , modifiers_(modifiers) {}
+        , modifiers_(modifiers)
+        , x_(x)
+        , y_(y) {}
 
    private:
     MouseButton button_;
     uint8_t modifiers_;
+    double x_;
+    double y_;
 };
 
 /**
  * @class MouseButtonPressedEvent
  * @brief Event generated when a mouse button is pressed.
+ *
+ * Position semantics: see MouseButtonEvent (NaN when not provided; use hasPosition()).
  */
 class MouseButtonPressedEvent : public MouseButtonEvent {
    public:
-    explicit MouseButtonPressedEvent(MouseButton button, uint8_t modifiers = 0)
-        : MouseButtonEvent(EventType::eMouseButtonPressed, button, modifiers) {}
+    /**
+     * @param x Cursor x in window/client coords (pixels); NaN if not available.
+     * @param y Cursor y in window/client coords (pixels); NaN if not available.
+     */
+    explicit MouseButtonPressedEvent(MouseButton button, uint8_t modifiers = 0,
+                                    double x = std::numeric_limits<double>::quiet_NaN(),
+                                    double y = std::numeric_limits<double>::quiet_NaN())
+        : MouseButtonEvent(EventType::eMouseButtonPressed, button, modifiers, x, y) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonPressed"; }
 
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
         ss << "MouseButtonPressedEvent: " << static_cast<int>(button());
+        if (hasPosition()) { ss << " at (" << x() << ", " << y() << ")"; }
         return ss.str();
     }
 };
@@ -61,17 +95,26 @@ class MouseButtonPressedEvent : public MouseButtonEvent {
 /**
  * @class MouseButtonReleasedEvent
  * @brief Event generated when a mouse button is released.
+ *
+ * Position semantics: see MouseButtonEvent (NaN when not provided; use hasPosition()).
  */
 class MouseButtonReleasedEvent : public MouseButtonEvent {
    public:
-    explicit MouseButtonReleasedEvent(MouseButton button, uint8_t modifiers = 0)
-        : MouseButtonEvent(EventType::eMouseButtonReleased, button, modifiers) {}
+    /**
+     * @param x Cursor x in window/client coords (pixels); NaN if not available.
+     * @param y Cursor y in window/client coords (pixels); NaN if not available.
+     */
+    explicit MouseButtonReleasedEvent(MouseButton button, uint8_t modifiers = 0,
+                                     double x = std::numeric_limits<double>::quiet_NaN(),
+                                     double y = std::numeric_limits<double>::quiet_NaN())
+        : MouseButtonEvent(EventType::eMouseButtonReleased, button, modifiers, x, y) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonReleased"; }
 
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
         ss << "MouseButtonReleasedEvent: " << static_cast<int>(button());
+        if (hasPosition()) { ss << " at (" << x() << ", " << y() << ")"; }
         return ss.str();
     }
 };

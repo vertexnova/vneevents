@@ -81,3 +81,6 @@ coverage/
 
 # CMakeLists.txt.user
 CMakeLists.txt.user
+
+# Clangd cache
+.cache/

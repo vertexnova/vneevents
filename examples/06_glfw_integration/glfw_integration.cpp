@@ -191,22 +191,20 @@ void GLFWIntegration::handleKeyEvent(int key, int /* scancode */, int action, in
 }
 
 void GLFWIntegration::handleMouseButton(GLFWwindow* window, int button, int action, int mods) {
+    double x = 0, y = 0;
+    glfwGetCursorPos(window, &x, &y);
     vne::events::MouseButton b = glfwButtonToMouseButton(button);
     const uint8_t m = glfwModsToModifierKey(mods);
     if (action == GLFW_PRESS) {
-        event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonPressedEvent>(b, m));
+        event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonPressedEvent>(b, m, x, y));
         vne::events::Input::updateMouseButtonState(static_cast<int>(b), true);
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
-            double x = 0, y = 0;
-            glfwGetCursorPos(window, &x, &y);
             event_manager_.pushEvent(std::make_unique<vne::events::TouchPressEvent>(0, x, y));
         }
     } else if (action == GLFW_RELEASE) {
-        event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonReleasedEvent>(b, m));
+        event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonReleasedEvent>(b, m, x, y));
         vne::events::Input::updateMouseButtonState(static_cast<int>(b), false);
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
-            double x = 0, y = 0;
-            glfwGetCursorPos(window, &x, &y);
             event_manager_.pushEvent(std::make_unique<vne::events::TouchReleaseEvent>(0, x, y));
         }
     }

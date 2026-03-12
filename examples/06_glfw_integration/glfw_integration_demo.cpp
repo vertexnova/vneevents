@@ -16,6 +16,7 @@
 #include <vertexnova/logging/logging.h>
 
 #include <glad/glad.h>
+#include <sstream>
 #include <string>
 
 namespace {
@@ -79,14 +80,18 @@ class GlfwEventLogger : public vne::events::EventListener {
             }
             case EventType::eMouseButtonPressed: {
                 const auto& e = static_cast<const vne::events::MouseButtonPressedEvent&>(event);
+                std::ostringstream pos;
+                if (e.hasPosition()) { pos << " at (" << e.x() << ", " << e.y() << ")"; }
                 VNE_LOG_INFO << "  [Event] Mouse button pressed: " << static_cast<int>(e.button())
-                             << " mods=" << modifierString(e.modifiers());
+                             << pos.str() << " mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eMouseButtonReleased: {
                 const auto& e = static_cast<const vne::events::MouseButtonReleasedEvent&>(event);
+                std::ostringstream pos;
+                if (e.hasPosition()) { pos << " at (" << e.x() << ", " << e.y() << ")"; }
                 VNE_LOG_INFO << "  [Event] Mouse button released: " << static_cast<int>(e.button())
-                             << " mods=" << modifierString(e.modifiers());
+                             << pos.str() << " mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eTouchPress: {
