@@ -15,6 +15,7 @@
 #include <glad/glad.h>
 
 #include <vertexnova/events/events.h>
+#include <array>
 #include <memory>
 
 namespace vne::events::examples {
@@ -51,9 +52,17 @@ class GLFWIntegration {
     static void windowResizeCallback(GLFWwindow* window, int width, int height);
     static void windowCloseCallback(GLFWwindow* window);
 
+    static constexpr double kDoubleClickMaxIntervalSeconds_ = 0.3;   // 300 ms
+    static constexpr double kDoubleClickMaxDistancePixels_ = 4.0;    // small movement
+
     vne::events::EventManager& event_manager_;
     GLFWwindow* window_ = nullptr;
     bool initialized_ = false;
+
+    // Per-button state for double-click detection (indexed by GLFW mouse button)
+    std::array<double, GLFW_MOUSE_BUTTON_LAST + 1> last_click_time_{};  // glfwGetTime() seconds
+    std::array<double, GLFW_MOUSE_BUTTON_LAST + 1> last_click_x_{};
+    std::array<double, GLFW_MOUSE_BUTTON_LAST + 1> last_click_y_{};
 };
 
 }  // namespace vne::events::examples
