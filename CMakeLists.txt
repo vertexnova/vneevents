@@ -20,11 +20,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
 #==============================================================================
-# Add custom CMake modules path
+# Add custom CMake modules path (project cmake folder)
 #==============================================================================
-if(EXISTS "${PROJECT_SOURCE_DIR}/deps/external/vnecmake/modules")
-    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/deps/external/vnecmake/modules")
-endif()
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 #==============================================================================
