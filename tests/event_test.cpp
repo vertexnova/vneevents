@@ -84,8 +84,9 @@ TEST(MouseEventTest, MouseButtonPressed) {
 
     EXPECT_EQ(event.type(), EventType::eMouseButtonPressed);
     EXPECT_EQ(event.button(), MouseButton::eLeft);
-    EXPECT_DOUBLE_EQ(event.x(), 0.0);
-    EXPECT_DOUBLE_EQ(event.y(), 0.0);
+    EXPECT_FALSE(event.hasPosition());
+    EXPECT_TRUE(std::isnan(event.x()));
+    EXPECT_TRUE(std::isnan(event.y()));
     EXPECT_TRUE(event.isInCategory(EventCategory::eMouseButton));
 }
 
@@ -93,8 +94,16 @@ TEST(MouseEventTest, MouseButtonPressedWithPosition) {
     MouseButtonPressedEvent event(MouseButton::eLeft, 0, 42.5, 100.25);
 
     EXPECT_EQ(event.button(), MouseButton::eLeft);
+    EXPECT_TRUE(event.hasPosition());
     EXPECT_DOUBLE_EQ(event.x(), 42.5);
     EXPECT_DOUBLE_EQ(event.y(), 100.25);
+    EXPECT_NE(event.toString().find(" at (42.5, 100.25)"), std::string::npos);
+}
+
+TEST(MouseEventTest, MouseButtonPressedToStringOmitsPositionWhenUnknown) {
+    MouseButtonPressedEvent event(MouseButton::eLeft);
+    EXPECT_FALSE(event.hasPosition());
+    EXPECT_EQ(event.toString().find(" at ("), std::string::npos);
 }
 
 TEST(MouseEventTest, MouseButtonReleased) {
@@ -102,16 +111,25 @@ TEST(MouseEventTest, MouseButtonReleased) {
 
     EXPECT_EQ(event.type(), EventType::eMouseButtonReleased);
     EXPECT_EQ(event.button(), MouseButton::eRight);
-    EXPECT_DOUBLE_EQ(event.x(), 0.0);
-    EXPECT_DOUBLE_EQ(event.y(), 0.0);
+    EXPECT_FALSE(event.hasPosition());
+    EXPECT_TRUE(std::isnan(event.x()));
+    EXPECT_TRUE(std::isnan(event.y()));
 }
 
 TEST(MouseEventTest, MouseButtonReleasedWithPosition) {
     MouseButtonReleasedEvent event(MouseButton::eRight, 0, 10.0, 20.0);
 
     EXPECT_EQ(event.button(), MouseButton::eRight);
+    EXPECT_TRUE(event.hasPosition());
     EXPECT_DOUBLE_EQ(event.x(), 10.0);
     EXPECT_DOUBLE_EQ(event.y(), 20.0);
+    EXPECT_NE(event.toString().find(" at (10, 20)"), std::string::npos);
+}
+
+TEST(MouseEventTest, MouseButtonReleasedToStringOmitsPositionWhenUnknown) {
+    MouseButtonReleasedEvent event(MouseButton::eRight);
+    EXPECT_FALSE(event.hasPosition());
+    EXPECT_EQ(event.toString().find(" at ("), std::string::npos);
 }
 
 TEST(MouseEventTest, MouseMoved) {
