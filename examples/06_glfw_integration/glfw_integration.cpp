@@ -63,8 +63,8 @@ GLFWIntegration::GLFWIntegration(vne::events::EventManager& event_manager)
     : event_manager_(event_manager)
     , window_(nullptr)
     , initialized_(false) {
-    // Initialize double-click tracking state (-1.0 = no previous click; first click never double)
-    last_click_time_.fill(-1.0);
+    // Initialize double-click tracking state (kNoClickTime = no previous click; first click never double)
+    last_click_time_.fill(kNoClickTime);
     last_click_x_.fill(0.0);
     last_click_y_.fill(0.0);
 }
@@ -207,7 +207,7 @@ void GLFWIntegration::handleMouseButton(GLFWwindow* window, int button, int acti
         const double now = glfwGetTime();
         const std::size_t i = static_cast<std::size_t>(idx);
         // Only attempt double-click detection if we have a valid previous click time.
-        if (last_click_time_[i] >= 0.0) {
+        if (last_click_time_[i] != kNoClickTime) {
             const double dt = now - last_click_time_[i];
             const double dx = x - last_click_x_[i];
             const double dy = y - last_click_y_[i];
