@@ -20,9 +20,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
 #==============================================================================
-# Add custom CMake modules path (project cmake folder)
+# Add vnecmake submodule modules directory if present (preserve prior behavior
+# from deps/external/vnecmake/modules now that submodule lives at cmake/vnecmake)
 #==============================================================================
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+if(EXISTS "${PROJECT_SOURCE_DIR}/cmake/vnecmake/modules")
+    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/vnecmake/modules")
+else()
+    message(WARNING "vnecmake submodule not found at cmake/vnecmake; run git submodule update --init")
+endif()
 
 #==============================================================================
 # Internal Libraries
