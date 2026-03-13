@@ -48,7 +48,7 @@ class MouseButtonEvent : public Event {
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eMouseButton | EventCategory::eInput; }
 
    protected:
-    /** @param x Cursor x (pixels); NaN when not available. @param y Cursor y (pixels); NaN when not available. */
+    /** @param type Event type. @param button Mouse button. @param modifiers Modifier key flags. @param x Cursor x (pixels); NaN when not available. @param y Cursor y (pixels); NaN when not available. */
     MouseButtonEvent(EventType type, MouseButton button, uint8_t modifiers = 0,
                     double x = std::numeric_limits<double>::quiet_NaN(),
                     double y = std::numeric_limits<double>::quiet_NaN())
@@ -74,6 +74,8 @@ class MouseButtonEvent : public Event {
 class MouseButtonPressedEvent : public MouseButtonEvent {
    public:
     /**
+     * @param button Mouse button that was pressed.
+     * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
      * @param x Cursor x in window/client coords (pixels); NaN if not available.
      * @param y Cursor y in window/client coords (pixels); NaN if not available.
      */
@@ -101,6 +103,8 @@ class MouseButtonPressedEvent : public MouseButtonEvent {
 class MouseButtonReleasedEvent : public MouseButtonEvent {
    public:
     /**
+     * @param button Mouse button that was released.
+     * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
      * @param x Cursor x in window/client coords (pixels); NaN if not available.
      * @param y Cursor y in window/client coords (pixels); NaN if not available.
      */
@@ -128,6 +132,8 @@ class MouseButtonReleasedEvent : public MouseButtonEvent {
 class MouseButtonDoubleClickedEvent : public MouseButtonEvent {
    public:
     /**
+     * @param button Mouse button that was double-clicked.
+     * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
      * @param x Cursor x in window/client coords (pixels); NaN if not available.
      * @param y Cursor y in window/client coords (pixels); NaN if not available.
      */
