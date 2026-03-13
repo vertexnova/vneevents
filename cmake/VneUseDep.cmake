@@ -41,6 +41,15 @@ function(vne_use_dep)
 
     if(ARG_CACHE_VARS)
         list(LENGTH ARG_CACHE_VARS _len)
+        # CACHE_VARS must be a flat list of VAR VALUE pairs
+        math(EXPR _mod "${_len} % 2")
+        if(NOT _mod EQUAL 0)
+            message(FATAL_ERROR
+                "vne_use_dep: CACHE_VARS expects an even number of arguments "
+                "(VAR VALUE pairs), but got ${_len}")
+        endif()
+        # Restrict CACHE_VARS to boolean-only and validate values
+        set(_vne_valid_bool_values TRUE FALSE ON OFF YES NO Y N 1 0)
         set(_i 0)
         while(_i LESS _len)
             list(GET ARG_CACHE_VARS ${_i} _var)
@@ -49,6 +58,15 @@ function(vne_use_dep)
                 break()
             endif()
             list(GET ARG_CACHE_VARS ${_vi} _val)
+            # Validate that the value is a proper CMake boolean
+            string(TOUPPER "${_val}" _val_upper)
+            list(FIND _vne_valid_bool_values "${_val_upper}" _bool_idx)
+            if(_bool_idx EQUAL -1)
+                message(FATAL_ERROR
+                    "vne_use_dep: CACHE_VARS entry '${_var}' must be a boolean "
+                    "value (one of: TRUE, FALSE, ON, OFF, YES, NO, Y, N, 1, 0); "
+                    "got '${_val}'")
+            endif()
             set(${_var} ${_val} CACHE BOOL "" FORCE)
             math(EXPR _i "${_i} + 2")
         endwhile()

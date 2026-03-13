@@ -55,14 +55,14 @@ class GLFWIntegration {
     static constexpr double kDoubleClickMaxIntervalSeconds_ = 0.3;   // 300 ms
     static constexpr double kDoubleClickMaxDistancePixels_ = 4.0;    // small movement
     /** Sentinel for last_click_time_ meaning "no previous click"; first click never counts as double. */
-    static constexpr double kNoClickTime = -1.0;
+    static const double kNoClickTimeSeconds_;
 
     vne::events::EventManager& event_manager_;
     GLFWwindow* window_ = nullptr;
     bool initialized_ = false;
 
     // Per-button state for double-click detection (indexed by GLFW mouse button)
-    std::array<double, GLFW_MOUSE_BUTTON_LAST + 1> last_click_time_{};  // glfwGetTime() or kNoClickTime
+    std::array<double, GLFW_MOUSE_BUTTON_LAST + 1> last_click_time_{};  // glfwGetTime() or kNoClickTimeSeconds_
     std::array<double, GLFW_MOUSE_BUTTON_LAST + 1> last_click_x_{};
     std::array<double, GLFW_MOUSE_BUTTON_LAST + 1> last_click_y_{};
 };
