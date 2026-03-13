@@ -1,6 +1,3 @@
-[submodule "deps/external/vnecmake"]
-	path = deps/external/vnecmake
-	url = git@github.com:vertexnova/vnecmake.git
 [submodule "deps/internal/vnecommon"]
 	path = deps/internal/vnecommon
 	url = git@github.com:vertexnova/vnecommon.git
@@ -16,3 +13,6 @@
 [submodule "deps/internal/opengl-glad"]
 	path = deps/internal/opengl-glad
 	url = git@github.com:vertexnova/opengl-glad.git
+[submodule "cmake/vnecmake"]
+	path = cmake/vnecmake
+	url = git@github.com:vertexnova/vnecmake.git

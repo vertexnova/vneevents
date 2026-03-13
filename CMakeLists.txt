@@ -20,12 +20,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
 #==============================================================================
-# Add custom CMake modules path
+# Add vnecmake submodule modules directory if present (preserve prior behavior
+# from deps/external/vnecmake/modules now that submodule lives at cmake/vnecmake)
 #==============================================================================
-if(EXISTS "${PROJECT_SOURCE_DIR}/deps/external/vnecmake/modules")
-    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/deps/external/vnecmake/modules")
+if(EXISTS "${PROJECT_SOURCE_DIR}/cmake/vnecmake/modules")
+    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/vnecmake/modules")
+else()
+    message(WARNING "vnecmake submodule not found at cmake/vnecmake; run git submodule update --init")
 endif()
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 #==============================================================================
 # Internal Libraries
@@ -42,9 +44,10 @@ if(NOT TARGET vne::common)
     endif()
 endif()
 
-# VneLogging - v1.0.0
+# VneLogging - v1.0.0 (provide VneUseDep from vneevents so vnelogging submodule stays clean)
 if(NOT TARGET vne::logging)
     if(EXISTS "${VNE_LIBS_DIR}/vnelogging/CMakeLists.txt")
+        list(PREPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
         message(STATUS "Using VneLogging from deps/internal/vnelogging (v1.0.0)")
         # Save current BUILD_TESTS and BUILD_EXAMPLES values
         set(VNEEVENTS_BUILD_TESTS ${BUILD_TESTS})

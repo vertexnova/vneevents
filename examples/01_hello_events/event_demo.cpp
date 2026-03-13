@@ -68,6 +68,7 @@ void EventDemo::demonstrateMouseEvents() {
     // Register listener for mouse events
     manager.registerListener(vne::events::EventType::eMouseMoved, mouse_listener);
     manager.registerListener(vne::events::EventType::eMouseButtonPressed, mouse_listener);
+    manager.registerListener(vne::events::EventType::eMouseButtonDoubleClicked, mouse_listener);
     manager.registerListener(vne::events::EventType::eMouseScrolled, mouse_listener);
 
     VNE_LOG_INFO << "  Registered mouse listeners";
@@ -78,6 +79,8 @@ void EventDemo::demonstrateMouseEvents() {
     manager.pushEvent(std::make_unique<vne::events::MouseMovedEvent>(150.0, 250.0));
     manager.pushEvent(
         std::make_unique<vne::events::MouseButtonPressedEvent>(vne::events::MouseButton::eLeft));
+    manager.pushEvent(
+        std::make_unique<vne::events::MouseButtonDoubleClickedEvent>(vne::events::MouseButton::eLeft));
     manager.pushEvent(std::make_unique<vne::events::MouseScrolledEvent>(0.0, 1.0));
 
     VNE_LOG_INFO << "  Processing events...";

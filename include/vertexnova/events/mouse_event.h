@@ -48,7 +48,7 @@ class MouseButtonEvent : public Event {
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eMouseButton | EventCategory::eInput; }
 
    protected:
-    /** @param x Cursor x (pixels); NaN when not available. @param y Cursor y (pixels); NaN when not available. */
+    /** @param type Event type. @param button Mouse button. @param modifiers Modifier key flags. @param x Cursor x (pixels); NaN when not available. @param y Cursor y (pixels); NaN when not available. */
     MouseButtonEvent(EventType type, MouseButton button, uint8_t modifiers = 0,
                     double x = std::numeric_limits<double>::quiet_NaN(),
                     double y = std::numeric_limits<double>::quiet_NaN())
@@ -74,6 +74,8 @@ class MouseButtonEvent : public Event {
 class MouseButtonPressedEvent : public MouseButtonEvent {
    public:
     /**
+     * @param button Mouse button that was pressed.
+     * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
      * @param x Cursor x in window/client coords (pixels); NaN if not available.
      * @param y Cursor y in window/client coords (pixels); NaN if not available.
      */
@@ -101,6 +103,8 @@ class MouseButtonPressedEvent : public MouseButtonEvent {
 class MouseButtonReleasedEvent : public MouseButtonEvent {
    public:
     /**
+     * @param button Mouse button that was released.
+     * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
      * @param x Cursor x in window/client coords (pixels); NaN if not available.
      * @param y Cursor y in window/client coords (pixels); NaN if not available.
      */
@@ -114,6 +118,35 @@ class MouseButtonReleasedEvent : public MouseButtonEvent {
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
         ss << "MouseButtonReleasedEvent: " << static_cast<int>(button());
+        if (hasPosition()) { ss << " at (" << x() << ", " << y() << ")"; }
+        return ss.str();
+    }
+};
+
+/**
+ * @class MouseButtonDoubleClickedEvent
+ * @brief Event generated when a mouse button is double-clicked.
+ *
+ * Position semantics: see MouseButtonEvent (NaN when not provided; use hasPosition()).
+ */
+class MouseButtonDoubleClickedEvent : public MouseButtonEvent {
+   public:
+    /**
+     * @param button Mouse button that was double-clicked.
+     * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
+     * @param x Cursor x in window/client coords (pixels); NaN if not available.
+     * @param y Cursor y in window/client coords (pixels); NaN if not available.
+     */
+    explicit MouseButtonDoubleClickedEvent(MouseButton button, uint8_t modifiers = 0,
+                                           double x = std::numeric_limits<double>::quiet_NaN(),
+                                           double y = std::numeric_limits<double>::quiet_NaN())
+        : MouseButtonEvent(EventType::eMouseButtonDoubleClicked, button, modifiers, x, y) {}
+
+    [[nodiscard]] std::string name() const override { return "MouseButtonDoubleClicked"; }
+
+    [[nodiscard]] std::string toString() const override {
+        std::ostringstream ss;
+        ss << "MouseButtonDoubleClickedEvent: " << static_cast<int>(button());
         if (hasPosition()) { ss << " at (" << x() << ", " << y() << ")"; }
         return ss.str();
     }

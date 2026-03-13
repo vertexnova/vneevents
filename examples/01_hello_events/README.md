@@ -49,6 +49,7 @@ cmake --build .
 [INFO] [vneevents.examples]   Received: MouseMovedEvent: (100, 200)
 [INFO] [vneevents.examples]   Received: MouseMovedEvent: (150, 250)
 [INFO] [vneevents.examples]   Received: MouseButtonPressedEvent: 0
+[INFO] [vneevents.examples]   Received: MouseButtonDoubleClickedEvent: 0
 [INFO] [vneevents.examples]   Received: MouseScrolledEvent: (0, 1)
 [INFO] [vneevents.examples] 
 [INFO] [vneevents.examples] --- Window Events ---

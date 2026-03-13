@@ -91,7 +91,7 @@ TEST(MouseEventTest, MouseButtonPressed) {
 }
 
 TEST(MouseEventTest, MouseButtonPressedWithPosition) {
-    MouseButtonPressedEvent event(MouseButton::eLeft, 0, 42.5, 100.25);
+    MouseButtonPressedEvent event(MouseButton::eLeft, uint8_t{0}, 42.5, 100.25);
 
     EXPECT_EQ(event.button(), MouseButton::eLeft);
     EXPECT_TRUE(event.hasPosition());
@@ -117,7 +117,7 @@ TEST(MouseEventTest, MouseButtonReleased) {
 }
 
 TEST(MouseEventTest, MouseButtonReleasedWithPosition) {
-    MouseButtonReleasedEvent event(MouseButton::eRight, 0, 10.0, 20.0);
+    MouseButtonReleasedEvent event(MouseButton::eRight, uint8_t{0}, 10.0, 20.0);
 
     EXPECT_EQ(event.button(), MouseButton::eRight);
     EXPECT_TRUE(event.hasPosition());
@@ -128,6 +128,32 @@ TEST(MouseEventTest, MouseButtonReleasedWithPosition) {
 
 TEST(MouseEventTest, MouseButtonReleasedToStringOmitsPositionWhenUnknown) {
     MouseButtonReleasedEvent event(MouseButton::eRight);
+    EXPECT_FALSE(event.hasPosition());
+    EXPECT_EQ(event.toString().find(" at ("), std::string::npos);
+}
+
+TEST(MouseEventTest, MouseButtonDoubleClicked) {
+    MouseButtonDoubleClickedEvent event(MouseButton::eLeft);
+
+    EXPECT_EQ(event.type(), EventType::eMouseButtonDoubleClicked);
+    EXPECT_EQ(event.button(), MouseButton::eLeft);
+    EXPECT_FALSE(event.hasPosition());
+    EXPECT_TRUE(std::isnan(event.x()));
+    EXPECT_TRUE(std::isnan(event.y()));
+}
+
+TEST(MouseEventTest, MouseButtonDoubleClickedWithPosition) {
+    MouseButtonDoubleClickedEvent event(MouseButton::eLeft, uint8_t{0}, 12.5, 34.75);
+
+    EXPECT_EQ(event.button(), MouseButton::eLeft);
+    EXPECT_TRUE(event.hasPosition());
+    EXPECT_DOUBLE_EQ(event.x(), 12.5);
+    EXPECT_DOUBLE_EQ(event.y(), 34.75);
+    EXPECT_NE(event.toString().find(" at (12.5, 34.75)"), std::string::npos);
+}
+
+TEST(MouseEventTest, MouseButtonDoubleClickedToStringOmitsPositionWhenUnknown) {
+    MouseButtonDoubleClickedEvent event(MouseButton::eLeft);
     EXPECT_FALSE(event.hasPosition());
     EXPECT_EQ(event.toString().find(" at ("), std::string::npos);
 }

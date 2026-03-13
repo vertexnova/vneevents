@@ -35,6 +35,10 @@ void MouseListener::onEvent(const vne::events::Event& event) {
     } else if (event.type() == vne::events::EventType::eMouseButtonPressed) {
         const auto& button_event = static_cast<const vne::events::MouseButtonPressedEvent&>(event);
         VNE_LOG_INFO << "  Received: " << button_event.toString();
+    } else if (event.type() == vne::events::EventType::eMouseButtonDoubleClicked) {
+        const auto& button_event =
+            static_cast<const vne::events::MouseButtonDoubleClickedEvent&>(event);
+        VNE_LOG_INFO << "  Received: " << button_event.toString();
     } else if (event.type() == vne::events::EventType::eMouseScrolled) {
         const auto& scroll_event = static_cast<const vne::events::MouseScrolledEvent&>(event);
         VNE_LOG_INFO << "  Received: " << scroll_event.toString();
