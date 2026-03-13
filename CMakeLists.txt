@@ -44,9 +44,10 @@ if(NOT TARGET vne::common)
     endif()
 endif()
 
-# VneLogging - v1.0.0
+# VneLogging - v1.0.0 (provide VneUseDep from vneevents so vnelogging submodule stays clean)
 if(NOT TARGET vne::logging)
     if(EXISTS "${VNE_LIBS_DIR}/vnelogging/CMakeLists.txt")
+        list(PREPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
         message(STATUS "Using VneLogging from deps/internal/vnelogging (v1.0.0)")
         # Save current BUILD_TESTS and BUILD_EXAMPLES values
         set(VNEEVENTS_BUILD_TESTS ${BUILD_TESTS})
