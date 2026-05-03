@@ -119,7 +119,14 @@ case "$base" in
     ndk_root="${ANDROID_NDK_ROOT:-}"
     ndk_rev=""
     if [[ -n "$ndk_root" && -f "$ndk_root/source.properties" ]]; then
-      ndk_rev="$(grep -E '^[[:space:]]*Pkg.Revision[[:space:]]*=' "$ndk_root/source.properties" | head -1 | cut -d= -f2- | tr -d ' \t\r\n')"
+      _ndk_rev_tmp="$(sed -n 's/^[[:space:]]*Pkg.Revision[[:space:]]*=[[:space:]]*//p' "$ndk_root/source.properties" 2>/dev/null \
+        | head -n1 \
+        | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/\r$//' \
+        || true)"
+      if [[ -n "$_ndk_rev_tmp" ]]; then
+        ndk_rev="$_ndk_rev_tmp"
+      fi
+      unset _ndk_rev_tmp
     fi
     if [[ -n "$ndk_rev" ]]; then
       detail="android${api}-ndk${ndk_rev}-${abi_slug}"

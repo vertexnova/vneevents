@@ -311,16 +311,19 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/vertexnova/"
 
 set(VNECOMMON_PUBLIC_HEADERS_DIR
     "${PROJECT_SOURCE_DIR}/deps/internal/vnecommon/include/vertexnova/common")
-if(NOT EXISTS "${VNECOMMON_PUBLIC_HEADERS_DIR}")
-    message(FATAL_ERROR
-        "Required public dependency headers were not found: "
-        "${VNECOMMON_PUBLIC_HEADERS_DIR}. "
-        "Ensure deps/internal/vnecommon is available (git submodule update --init).")
+if(EXISTS "${VNECOMMON_PUBLIC_HEADERS_DIR}")
+    install(DIRECTORY "${VNECOMMON_PUBLIC_HEADERS_DIR}/"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/common
+        FILES_MATCHING PATTERN "*.h"
+    )
+elseif(NOT TARGET vne::common)
+    message(WARNING
+        "Bundled vnecommon headers were not found at "
+        "'${VNECOMMON_PUBLIC_HEADERS_DIR}' and no target vne::common is available. "
+        "Skipping installation of vertexnova/common headers. "
+        "Provide an external vne::common (e.g. find_package before adding this project) or run "
+        "git submodule update --init on deps/internal/vnecommon if consumers need them.")
 endif()
-install(DIRECTORY "${VNECOMMON_PUBLIC_HEADERS_DIR}/"
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/common
-    FILES_MATCHING PATTERN "*.h"
-)
 
 if(EXISTS "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/include/vertexnova/logging")
     install(DIRECTORY "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/include/vertexnova/logging/"

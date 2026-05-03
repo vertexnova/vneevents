@@ -68,11 +68,32 @@ def check_clang_format() -> bool:
         return False
 
 
+def _clang_format_argv_paths(files: list, style_root: Path) -> list:
+    """Paths relative to style_root when under the repo; else absolute (for stable cwd)."""
+    style_root = style_root.resolve()
+    out = []
+    for f in files:
+        path = Path(f).resolve()
+        try:
+            out.append(str(path.relative_to(style_root)))
+        except ValueError:
+            out.append(str(path))
+    return out
+
+
 def run_clang_format(files: list, style_file: Path, dry_run: bool = False) -> bool:
-    """Run clang-format on the specified files."""
+    """Run clang-format on the specified files.
+
+    Uses style_file's parent as the subprocess working directory so --style=file
+    resolves .clang-format from the project root consistently with CI.
+    """
     if not files:
         print("No source files found to format.")
         return True
+
+    style_root = style_file.parent.resolve()
+    argv_paths = _clang_format_argv_paths(files, style_root)
+    cwd = str(style_root)
 
     binary = get_clang_format_binary()
     print(f"Found {len(files)} source files to format (using {binary}).")
@@ -87,9 +108,10 @@ def run_clang_format(files: list, style_file: Path, dry_run: bool = False) -> bo
         # Same as CI: fail if any file would be reformatted (--dry-run --Werror)
         print("DRY RUN - Checking for format violations (matches CI).")
         result = subprocess.run(
-            base_cmd + ['--dry-run', '--Werror'] + files,
+            base_cmd + ['--dry-run', '--Werror'] + argv_paths,
             capture_output=True,
             text=True,
+            cwd=cwd,
         )
         if result.returncode != 0:
             if result.stderr:
@@ -100,18 +122,19 @@ def run_clang_format(files: list, style_file: Path, dry_run: bool = False) -> bo
         return True
 
     # In-place formatting
-    for file_path in files:
-        print(f"Formatting: {file_path}")
+    for display_path, argv_path in zip(files, argv_paths):
+        print(f"Formatting: {display_path}")
         try:
             subprocess.run(
-                base_cmd + ['-i', file_path],
+                base_cmd + ['-i', argv_path],
                 capture_output=True,
                 text=True,
                 check=True,
+                cwd=cwd,
             )
             print(f"  ✓ Formatted successfully")
         except subprocess.CalledProcessError as e:
-            print(f"  ✗ Error formatting {file_path}: {e}")
+            print(f"  ✗ Error formatting {display_path}: {e}")
             if e.stderr:
                 print(f"    stderr: {e.stderr}")
             return False
