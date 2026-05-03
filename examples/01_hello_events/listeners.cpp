@@ -14,7 +14,7 @@
 #include <vertexnova/logging/logging.h>
 
 namespace {
-    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.hello_events")
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.hello_events")
 }
 namespace vne::events::examples {
 
@@ -36,8 +36,7 @@ void MouseListener::onEvent(const vne::events::Event& event) {
         const auto& button_event = static_cast<const vne::events::MouseButtonPressedEvent&>(event);
         VNE_LOG_INFO << "  Received: " << button_event.toString();
     } else if (event.type() == vne::events::EventType::eMouseButtonDoubleClicked) {
-        const auto& button_event =
-            static_cast<const vne::events::MouseButtonDoubleClickedEvent&>(event);
+        const auto& button_event = static_cast<const vne::events::MouseButtonDoubleClickedEvent&>(event);
         VNE_LOG_INFO << "  Received: " << button_event.toString();
     } else if (event.type() == vne::events::EventType::eMouseScrolled) {
         const auto& scroll_event = static_cast<const vne::events::MouseScrolledEvent&>(event);

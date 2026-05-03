@@ -22,7 +22,7 @@ namespace vne::events {
  * @class TouchEvent
  * @brief Base class for touch screen events.
  */
-class TouchEvent : public Event {
+class VNEEVENTS_API TouchEvent : public Event {
    public:
     [[nodiscard]] uint32_t touchId() const noexcept { return touch_id_; }
     [[nodiscard]] double x() const noexcept { return x_; }
@@ -47,7 +47,7 @@ class TouchEvent : public Event {
  * @class TouchPressEvent
  * @brief Event generated when a touch begins.
  */
-class TouchPressEvent : public TouchEvent {
+class VNEEVENTS_API TouchPressEvent : public TouchEvent {
    public:
     TouchPressEvent(uint32_t touch_id, double x, double y)
         : TouchEvent(EventType::eTouchPress, touch_id, x, y) {}
@@ -65,7 +65,7 @@ class TouchPressEvent : public TouchEvent {
  * @class TouchReleaseEvent
  * @brief Event generated when a touch ends.
  */
-class TouchReleaseEvent : public TouchEvent {
+class VNEEVENTS_API TouchReleaseEvent : public TouchEvent {
    public:
     TouchReleaseEvent(uint32_t touch_id, double x, double y)
         : TouchEvent(EventType::eTouchRelease, touch_id, x, y) {}
@@ -83,7 +83,7 @@ class TouchReleaseEvent : public TouchEvent {
  * @class TouchMoveEvent
  * @brief Event generated when a touch moves.
  */
-class TouchMoveEvent : public TouchEvent {
+class VNEEVENTS_API TouchMoveEvent : public TouchEvent {
    public:
     TouchMoveEvent(uint32_t touch_id, double x, double y)
         : TouchEvent(EventType::eTouchMove, touch_id, x, y) {}

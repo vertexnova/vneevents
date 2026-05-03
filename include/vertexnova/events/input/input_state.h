@@ -11,6 +11,7 @@
  */
 
 #include "../internal/read_write_mutex.h"
+#include "../export.h"
 
 #include <unordered_map>
 #include <utility>
@@ -29,7 +30,7 @@ class InputManager;
  *
  * @threadsafe All public methods are thread-safe.
  */
-class InputState {
+class VNEEVENTS_API InputState {
    public:
     InputState();
 

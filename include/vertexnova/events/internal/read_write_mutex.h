@@ -12,13 +12,15 @@
 
 #include <shared_mutex>
 
+#include "../export.h"
+
 namespace vne::events::internal {
 
 /**
  * @class ReadWriteMutex
  * @brief Wrapper for std::shared_mutex with a simple interface.
  */
-class ReadWriteMutex {
+class VNEEVENTS_API ReadWriteMutex {
    public:
     void lock() { mutex_.lock(); }
     void unlock() { mutex_.unlock(); }
@@ -36,7 +38,7 @@ class ReadWriteMutex {
  * @class ReadLockGuard
  * @brief RAII guard for acquiring a shared (read) lock.
  */
-class ReadLockGuard {
+class VNEEVENTS_API ReadLockGuard {
    public:
     explicit ReadLockGuard(ReadWriteMutex& m)
         : mutex_(m) {
@@ -55,7 +57,7 @@ class ReadLockGuard {
  * @class WriteLockGuard
  * @brief RAII guard for acquiring an exclusive (write) lock.
  */
-class WriteLockGuard {
+class VNEEVENTS_API WriteLockGuard {
    public:
     explicit WriteLockGuard(ReadWriteMutex& m)
         : mutex_(m) {

@@ -52,8 +52,8 @@ class GLFWIntegration {
     static void windowResizeCallback(GLFWwindow* window, int width, int height);
     static void windowCloseCallback(GLFWwindow* window);
 
-    static constexpr double kDoubleClickMaxIntervalSeconds_ = 0.3;   // 300 ms
-    static constexpr double kDoubleClickMaxDistancePixels_ = 4.0;    // small movement
+    static constexpr double kDoubleClickMaxIntervalSeconds_ = 0.3;  // 300 ms
+    static constexpr double kDoubleClickMaxDistancePixels_ = 4.0;   // small movement
     /** Sentinel for last_click_time_ meaning "no previous click"; first click never counts as double. */
     static const double kNoClickTimeSeconds_;
 

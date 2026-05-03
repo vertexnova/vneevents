@@ -26,7 +26,7 @@ namespace vne::events {
  *
  * @threadsafe All public methods are thread-safe.
  */
-class InputManager {
+class VNEEVENTS_API InputManager {
    public:
     /**
      * @brief Gets the singleton instance.

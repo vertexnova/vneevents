@@ -29,7 +29,7 @@ namespace vne::events {
  * @threadsafe All public methods are thread-safe. The singleton instance
  *             is created using a thread-safe pattern.
  */
-class EventManager {
+class VNEEVENTS_API EventManager {
    public:
     using ListenerPtr = std::shared_ptr<EventListener>;
 

@@ -11,6 +11,7 @@
  */
 
 #include "types.h"
+#include "export.h"
 
 #include <string>
 #include <ostream>
@@ -24,7 +25,7 @@ namespace vne::events {
  * This abstract class defines the common interface for all events.
  * Events have a type, timestamp, category flags, and can be marked as handled.
  */
-class Event {
+class VNEEVENTS_API Event {
    public:
     virtual ~Event() = default;
 

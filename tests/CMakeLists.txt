@@ -89,6 +89,20 @@ target_link_libraries(TestVneEvents
         vne::events
 )
 
+if(VNEEVENTS_LIB_TYPE STREQUAL "shared")
+    if(WIN32)
+        add_custom_command(TARGET TestVneEvents POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:vneevents>
+                $<TARGET_FILE_DIR:TestVneEvents>
+            VERBATIM)
+    else()
+        set_target_properties(TestVneEvents PROPERTIES
+            BUILD_RPATH "$<TARGET_FILE_DIR:vneevents>"
+        )
+    endif()
+endif()
+
 # Web platform specific configuration
 if(VNE_PLATFORM_WEB)
     target_compile_definitions(TestVneEvents PRIVATE VNE_PLATFORM_WEB)

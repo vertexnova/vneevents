@@ -2,139 +2,354 @@
 # Copyright (c) 2026 Ajeet Singh Yadav. All rights reserved.
 # Licensed under the Apache License, Version 2.0 (the "License")
 #
-# Author:    Ajeet Singh Yadav
-# Created:   January 2026
+# CI: static + shared (VNEEVENTS_LIB_TYPE), release-please skip, optional iOS install smoke.
 # ----------------------------------------------------------------------
 
 name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.event_name == 'push' && format('ci-push-{0}', github.sha) || format('ci-pr-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
+  detect-release:
+    name: "Pre-checks / detect release commit"
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.check.outputs.is_release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - id: check
+        env:
+          ACTOR: ${{ github.actor }}
+          EVENT: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          IS_RELEASE=false
+          if [[ "$EVENT" == "pull_request" ]]; then
+            if [[ "$HEAD_REF" == release-please--* ]]; then
+              IS_RELEASE=true
+              echo "Release-please PR detected — skipping builds."
+            fi
+          fi
+          if [[ "$EVENT" == "push" ]]; then
+            ACTOR_MATCH=false
+            if [[ "$ACTOR" == "release-please[bot]" || "$ACTOR" == "github-actions[bot]" ]]; then
+              ACTOR_MATCH=true
+            fi
+            BEFORE="${{ github.event.before }}"
+            ZERO_SHA="0000000000000000000000000000000000000000"
+            if [[ -z "$BEFORE" || "$BEFORE" == "$ZERO_SHA" ]]; then
+              CHANGED="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+            else
+              CHANGED="$(git diff --name-only "${BEFORE}..${{ github.sha }}" 2>/dev/null || true)"
+            fi
+            echo "Changed files: $CHANGED"
+            NON_RELEASE=$(echo "$CHANGED" | grep -vE '^(CHANGELOG\.md|VERSION|\.release-please-manifest\.json|\.github/release-please-config\.json)$' || true)
+            if [[ "$ACTOR_MATCH" == "true" && -z "$NON_RELEASE" && -n "$CHANGED" ]]; then
+              IS_RELEASE=true
+              echo "Release-please merge detected — skipping builds."
+            fi
+          fi
+          echo "is_release=$IS_RELEASE" >> "$GITHUB_OUTPUT"
+
+  format-check:
+    name: "Pre-checks / clang-format"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Install clang-format-17
+        run: sudo apt-get update -qq && sudo apt-get install -y clang-format-17
+      - name: Alias clang-format
+        run: sudo ln -sf /usr/bin/clang-format-17 /usr/local/bin/clang-format
+      - name: Check formatting
+        run: |
+          DIRS=(src include)
+          [[ -d tests ]] && DIRS+=(tests)
+          [[ -d examples ]] && DIRS+=(examples)
+          find "${DIRS[@]}" \
+            -type f \( -name '*.h' -o -name '*.hpp' -o -name '*.cpp' -o -name '*.c' \) \
+            -print0 \
+          | xargs -0 -r clang-format --dry-run --Werror \
+              --style=file --fallback-style=Google
+
+  pre-checks-gate:
+    name: "Pre-checks gate"
+    runs-on: ubuntu-latest
+    needs: [detect-release, format-check]
+    if: always()
+    steps:
+      - name: Verify format-check passed
+        run: |
+          if [[ "${{ needs.format-check.result }}" != "success" ]]; then
+            echo "::error::format-check did not pass"
+            exit 1
+          fi
+
   linux:
+    name: "Build+Test / Linux (${{ matrix.compiler }} / ${{ matrix.lib_type }})"
+    needs: [detect-release, pre-checks-gate]
+    if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc, clang]
         include:
           - compiler: gcc
+            lib_type: static
+            c_compiler: gcc
+            cpp_compiler: g++
+          - compiler: gcc
+            lib_type: shared
             c_compiler: gcc
             cpp_compiler: g++
           - compiler: clang
+            lib_type: static
+            c_compiler: clang
+            cpp_compiler: clang++
+          - compiler: clang
+            lib_type: shared
             c_compiler: clang
             cpp_compiler: clang++
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true  # Only direct submodules, not recursive (avoids nested vnecommon conflict)
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential cmake
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
 
-    - name: Configure CMake
-      run: |
-        cmake -B build -S . \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
-          -DBUILD_TESTS=ON
+      - name: Configure CMake
+        run: |
+          cmake -B "build/${{ matrix.lib_type }}/Release" -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+            -DVNEEVENTS_LIB_TYPE=${{ matrix.lib_type }} \
+            -DBUILD_TESTS=ON \
+            -DENABLE_IPO=OFF
 
-    - name: Build
-      run: cmake --build build --config Release --parallel
+      - name: Build
+        run: cmake --build "build/${{ matrix.lib_type }}/Release" --config Release --parallel
 
-    - name: Test
-      working-directory: build
-      run: ctest --output-on-failure
+      - name: Test
+        working-directory: "build/${{ matrix.lib_type }}/Release"
+        run: ctest --output-on-failure
 
   coverage:
+    name: "Build+Test / Coverage (GCC static)"
+    needs: [detect-release, pre-checks-gate]
+    if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true  # Only direct submodules, not recursive (avoids nested vnecommon conflict)
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential cmake lcov
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake lcov
 
-    - name: Configure CMake with Coverage
-      run: |
-        cmake -B build -S . \
-          -DCMAKE_BUILD_TYPE=Debug \
-          -DCMAKE_C_COMPILER=gcc \
-          -DCMAKE_CXX_COMPILER=g++ \
-          -DBUILD_TESTS=ON \
-          -DENABLE_COVERAGE=ON
+      - name: Configure CMake with Coverage
+        run: |
+          cmake -B build/static/Debug -S . \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DVNEEVENTS_LIB_TYPE=static \
+            -DBUILD_TESTS=ON \
+            -DENABLE_COVERAGE=ON \
+            -DENABLE_IPO=OFF
 
-    - name: Build
-      run: cmake --build build --config Debug --parallel
+      - name: Build
+        run: cmake --build build/static/Debug --config Debug --parallel
 
-    - name: Test
-      working-directory: build
-      run: ctest --output-on-failure
+      - name: Test
+        working-directory: build/static/Debug
+        run: ctest --output-on-failure
 
-    - name: Generate Coverage Report
-      run: |
-        lcov --capture --directory build --output-file coverage.info --ignore-errors mismatch,unused
-        lcov --remove coverage.info '/usr/*' '*/tests/*' '*/deps/external/*' '*/deps/internal/*' '*/_deps/*' '*/googletest/*' '*/googlemock/*' --output-file coverage.info --ignore-errors mismatch,unused
-        lcov --list coverage.info --ignore-errors mismatch,unused
+      - name: Generate Coverage Report
+        run: |
+          lcov --capture --directory build/static/Debug --output-file coverage.info --ignore-errors mismatch,unused
+          lcov --remove coverage.info '/usr/*' '*/tests/*' '*/deps/external/*' '*/deps/internal/*' '*/_deps/*' '*/googletest/*' '*/googlemock/*' --output-file coverage.info --ignore-errors mismatch,unused
+          lcov --list coverage.info --ignore-errors mismatch,unused
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN_VNE_EVENTS }}
-        slug: vertexnova/vneevents
-        files: ./coverage.info
-        fail_ci_if_error: false
-        verbose: true
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN_VNE_EVENTS }}
+          slug: vertexnova/vneevents
+          files: ./coverage.info
+          fail_ci_if_error: false
+          verbose: true
 
   macos:
+    name: "Build+Test / macOS (${{ matrix.lib_type }})"
+    needs: [detect-release, pre-checks-gate]
+    if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: macos-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        lib_type: [static, shared]
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true  # Only direct submodules, not recursive (avoids nested vnecommon conflict)
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
 
-    - name: Configure CMake
-      run: |
-        cmake -B build -S . \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DBUILD_TESTS=ON
+      - name: Configure CMake
+        run: |
+          cmake -B "build/${{ matrix.lib_type }}/Release" -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DVNEEVENTS_LIB_TYPE=${{ matrix.lib_type }} \
+            -DBUILD_TESTS=ON \
+            -DENABLE_IPO=OFF
 
-    - name: Build
-      run: cmake --build build --config Release --parallel
+      - name: Build
+        run: cmake --build "build/${{ matrix.lib_type }}/Release" --config Release --parallel
 
-    - name: Test
-      working-directory: build
-      run: ctest --output-on-failure
+      - name: Test
+        working-directory: "build/${{ matrix.lib_type }}/Release"
+        run: ctest --output-on-failure
 
   windows:
+    name: "Build+Test / Windows (${{ matrix.lib_type }})"
+    needs: [detect-release, pre-checks-gate]
+    if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lib_type: [static, shared]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Configure CMake
+        run: |
+          cmake -B "build/${{ matrix.lib_type }}/Release" -S . `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DVNEEVENTS_LIB_TYPE=${{ matrix.lib_type }} `
+            -DBUILD_TESTS=ON `
+            -DENABLE_IPO=OFF
+
+      - name: Build
+        run: cmake --build "build/${{ matrix.lib_type }}/Release" --config Release --parallel
+
+      - name: Test
+        working-directory: "build/${{ matrix.lib_type }}/Release"
+        run: ctest --output-on-failure -C Release
+
+  build-ios:
+    name: "Build / iOS (static)"
+    needs: [detect-release, pre-checks-gate]
+    if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.0"
+
+      - name: Verify Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u MD_APPLE_SDK_ROOT -u SDKROOT -u IOS_SDK_VERSION xcodebuild -version
+
+      - name: Configure CMake (iOS)
+        env:
+          CI: true
+        run: |
+          cmake -B build/static/Release -S . \
+            -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=NO \
+            -DVNEEVENTS_LIB_TYPE=static \
+            -DBUILD_TESTS=OFF \
+            -DENABLE_IPO=OFF
+
+      - name: Build
+        run: cmake --build build/static/Release --config Release --parallel
+
+      - name: Install (Release) and verify layout
+        shell: bash
+        env:
+          CI: true
+        run: |
+          set -euo pipefail
+          STAGE="${GITHUB_WORKSPACE}/install-ios-static"
+          rm -rf "$STAGE"
+          cmake --install build/static/Release --config Release --prefix "$STAGE"
+          test -d "$STAGE/include/vertexnova/events"
+          test -d "$STAGE/include/vertexnova/common"
+          test -n "$(find "$STAGE" -name '*.a' -print -quit)"
+          rm -rf "${GITHUB_WORKSPACE}/install"
+          cmake --install build/static/Release --config Release
+          test -d "${GITHUB_WORKSPACE}/install/include/vertexnova/events"
+          test -d "${GITHUB_WORKSPACE}/install/include/vertexnova/common"
+          test -n "$(find "${GITHUB_WORKSPACE}/install" -name '*.a' -print -quit)"
+
+  ci-gate:
+    name: "CI Gate"
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - detect-release
+      - pre-checks-gate
+      - linux
+      - coverage
+      - macos
+      - windows
+      - build-ios
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true  # Only direct submodules, not recursive (avoids nested vnecommon conflict)
-
-    - name: Configure CMake
-      run: |
-        cmake -B build -S . `
-          -DCMAKE_BUILD_TYPE=Release `
-          -DBUILD_TESTS=ON
-
-    - name: Build
-      run: cmake --build build --config Release --parallel
-
-    - name: Test
-      working-directory: build
-      run: ctest --output-on-failure -C Release
+      - name: Check required jobs passed
+        run: |
+          RESULTS=(
+            "detect-release=${{ needs.detect-release.result }}"
+            "pre-checks-gate=${{ needs.pre-checks-gate.result }}"
+            "linux=${{ needs.linux.result }}"
+            "coverage=${{ needs.coverage.result }}"
+            "macos=${{ needs.macos.result }}"
+            "windows=${{ needs.windows.result }}"
+            "build-ios=${{ needs.build-ios.result }}"
+          )
+          FAILED=0
+          for entry in "${RESULTS[@]}"; do
+            JOB="${entry%%=*}"
+            RESULT="${entry##*=}"
+            if [[ "$RESULT" != "success" && "$RESULT" != "skipped" ]]; then
+              echo "::error::Job $JOB did not pass ($RESULT)"
+              FAILED=1
+            fi
+          done
+          exit $FAILED

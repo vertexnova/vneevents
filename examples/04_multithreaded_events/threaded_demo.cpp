@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace {
-    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.multithreaded_events")
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.multithreaded_events")
 }
 
 namespace vne::events::examples {
@@ -32,13 +32,13 @@ void ThreadedDemo::run() {
     auto& manager = vne::events::EventManager::instance();
 
     demonstrateConcurrentEventPushing();
-    
+
     // Clear any remaining events and reset state
     manager.clearPendingEvents();
     events_received_ = 0;
 
     demonstrateConcurrentListenerRegistration();
-    
+
     // Clear any remaining events and reset state
     manager.clearPendingEvents();
     events_received_ = 0;
@@ -72,8 +72,8 @@ void ThreadedDemo::demonstrateConcurrentEventPushing() {
             for (int j = 0; j < events_per_thread; ++j) {
                 // Each thread pushes events with different key codes
                 int key_code = static_cast<int>(vne::events::KeyCode::eA) + (i * events_per_thread) + j;
-                manager.pushEvent(std::make_unique<vne::events::KeyPressedEvent>(
-                    static_cast<vne::events::KeyCode>(key_code)));
+                manager.pushEvent(
+                    std::make_unique<vne::events::KeyPressedEvent>(static_cast<vne::events::KeyCode>(key_code)));
             }
         });
     }
@@ -91,7 +91,8 @@ void ThreadedDemo::demonstrateConcurrentEventPushing() {
 
     VNE_LOG_INFO << "  Events received: " << events_received_.load();
     VNE_LOG_INFO << "  Expected: " << (num_threads * events_per_thread);
-    VNE_LOG_INFO << "  Thread-safe: " << (events_received_.load() == num_threads * events_per_thread ? "✓ Yes" : "✗ No");
+    VNE_LOG_INFO << "  Thread-safe: "
+                 << (events_received_.load() == num_threads * events_per_thread ? "✓ Yes" : "✗ No");
 
     // Unregister listener to avoid interference with next test
     manager.unregisterListener(vne::events::EventType::eKeyPressed, counter.get());
@@ -186,19 +187,20 @@ void ThreadedDemo::demonstrateThreadSafeProcessing() {
     }
 
     VNE_LOG_INFO << "  All threads completed pushing events";
-    
+
     // Verify queue size before processing
     size_t queue_size = manager.pendingEventCount();
     VNE_LOG_INFO << "  Events in queue: " << queue_size;
     VNE_LOG_INFO << "  Expected in queue: " << (num_threads * events_per_thread);
-    
+
     VNE_LOG_INFO << "  Processing all events...";
 
     // Process all events after threads have finished
     manager.processEvents();
     VNE_LOG_INFO << "  Events received: " << events_received_.load();
     VNE_LOG_INFO << "  Expected: " << (num_threads * events_per_thread);
-    VNE_LOG_INFO << "  Thread-safe: " << (events_received_.load() == num_threads * events_per_thread ? "✓ Yes" : "✗ No");
+    VNE_LOG_INFO << "  Thread-safe: "
+                 << (events_received_.load() == num_threads * events_per_thread ? "✓ Yes" : "✗ No");
 
     events_received_ = 0;
     VNE_LOG_INFO << "";

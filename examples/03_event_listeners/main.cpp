@@ -17,7 +17,7 @@
 #include <vertexnova/logging/logging.h>
 
 namespace {
-    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.event_listeners")
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.event_listeners")
 }
 
 using vne::events::examples::ListenerDemo;

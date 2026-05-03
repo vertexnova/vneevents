@@ -26,7 +26,7 @@ namespace vne::events {
  *
  * @threadsafe All public methods are thread-safe.
  */
-class EventBus {
+class VNEEVENTS_API EventBus {
    public:
     using ListenerPtr = std::shared_ptr<EventListener>;
 

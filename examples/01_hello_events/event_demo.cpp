@@ -15,7 +15,7 @@
 
 #include <vertexnova/logging/logging.h>
 
-namespace  {
+namespace {
 CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.hello_events")
 }
 
@@ -77,10 +77,8 @@ void EventDemo::demonstrateMouseEvents() {
     // Push some mouse events
     manager.pushEvent(std::make_unique<vne::events::MouseMovedEvent>(100.0, 200.0));
     manager.pushEvent(std::make_unique<vne::events::MouseMovedEvent>(150.0, 250.0));
-    manager.pushEvent(
-        std::make_unique<vne::events::MouseButtonPressedEvent>(vne::events::MouseButton::eLeft));
-    manager.pushEvent(
-        std::make_unique<vne::events::MouseButtonDoubleClickedEvent>(vne::events::MouseButton::eLeft));
+    manager.pushEvent(std::make_unique<vne::events::MouseButtonPressedEvent>(vne::events::MouseButton::eLeft));
+    manager.pushEvent(std::make_unique<vne::events::MouseButtonDoubleClickedEvent>(vne::events::MouseButton::eLeft));
     manager.pushEvent(std::make_unique<vne::events::MouseScrolledEvent>(0.0, 1.0));
 
     VNE_LOG_INFO << "  Processing events...";

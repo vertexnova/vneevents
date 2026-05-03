@@ -188,6 +188,7 @@ def interactive_mode(config: BuildConfig):
 
 def build_cmake_command(project_root: Path, build_type: str) -> List[str]:
     """Build CMake configuration command."""
+    lib_type = os.environ.get("VNEEVENTS_LIB_TYPE", "static")
     args = [
         "cmake",
         "-G", "Visual Studio 17 2022",
@@ -195,6 +196,7 @@ def build_cmake_command(project_root: Path, build_type: str) -> List[str]:
         "-DCMAKE_BUILD_TYPE=" + build_type,
         "-DCMAKE_C_COMPILER=cl",
         "-DCMAKE_CXX_COMPILER=cl",
+        "-DVNEEVENTS_LIB_TYPE=" + lib_type,
         "-DBUILD_TESTS=ON",
         str(project_root),
     ]

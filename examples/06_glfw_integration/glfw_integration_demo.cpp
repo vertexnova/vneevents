@@ -46,7 +46,8 @@ const char* modifierString(uint8_t mods) {
 
 class GlfwEventLogger : public vne::events::EventListener {
    public:
-    explicit GlfwEventLogger(bool* running) : running_(running) {}
+    explicit GlfwEventLogger(bool* running)
+        : running_(running) {}
     void onEvent(const vne::events::Event& event) override {
         using vne::events::EventType;
         switch (event.type()) {
@@ -63,7 +64,8 @@ class GlfwEventLogger : public vne::events::EventListener {
                 const auto& e = static_cast<const vne::events::KeyPressedEvent&>(event);
                 VNE_LOG_INFO << "  [Event] Key pressed: " << static_cast<int>(e.keyCode())
                              << " mods=" << modifierString(e.modifiers());
-                if (e.keyCode() == vne::events::KeyCode::eEscape) *running_ = false;
+                if (e.keyCode() == vne::events::KeyCode::eEscape)
+                    *running_ = false;
                 break;
             }
             case EventType::eKeyReleased: {
@@ -81,25 +83,31 @@ class GlfwEventLogger : public vne::events::EventListener {
             case EventType::eMouseButtonPressed: {
                 const auto& e = static_cast<const vne::events::MouseButtonPressedEvent&>(event);
                 std::ostringstream pos;
-                if (e.hasPosition()) { pos << " at (" << e.x() << ", " << e.y() << ")"; }
-                VNE_LOG_INFO << "  [Event] Mouse button pressed: " << static_cast<int>(e.button())
-                             << pos.str() << " mods=" << modifierString(e.modifiers());
+                if (e.hasPosition()) {
+                    pos << " at (" << e.x() << ", " << e.y() << ")";
+                }
+                VNE_LOG_INFO << "  [Event] Mouse button pressed: " << static_cast<int>(e.button()) << pos.str()
+                             << " mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eMouseButtonReleased: {
                 const auto& e = static_cast<const vne::events::MouseButtonReleasedEvent&>(event);
                 std::ostringstream pos;
-                if (e.hasPosition()) { pos << " at (" << e.x() << ", " << e.y() << ")"; }
-                VNE_LOG_INFO << "  [Event] Mouse button released: " << static_cast<int>(e.button())
-                             << pos.str() << " mods=" << modifierString(e.modifiers());
+                if (e.hasPosition()) {
+                    pos << " at (" << e.x() << ", " << e.y() << ")";
+                }
+                VNE_LOG_INFO << "  [Event] Mouse button released: " << static_cast<int>(e.button()) << pos.str()
+                             << " mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eMouseButtonDoubleClicked: {
                 const auto& e = static_cast<const vne::events::MouseButtonDoubleClickedEvent&>(event);
                 std::ostringstream pos;
-                if (e.hasPosition()) { pos << " at (" << e.x() << ", " << e.y() << ")"; }
-                VNE_LOG_INFO << "  [Event] Mouse button double-clicked: " << static_cast<int>(e.button())
-                             << pos.str() << " mods=" << modifierString(e.modifiers());
+                if (e.hasPosition()) {
+                    pos << " at (" << e.x() << ", " << e.y() << ")";
+                }
+                VNE_LOG_INFO << "  [Event] Mouse button double-clicked: " << static_cast<int>(e.button()) << pos.str()
+                             << " mods=" << modifierString(e.modifiers());
                 break;
             }
             case EventType::eTouchPress: {
@@ -141,7 +149,8 @@ void GlfwIntegrationDemo::run() {
     }
 
     VNE_LOG_INFO << "  Window open. Keys (W,A,S,D,Space), mouse, resize; ESC or close to exit.";
-    VNE_LOG_INFO << "  Touch: LMB mimics touch (id=0). Hold Shift/Ctrl/Alt/Super and use mouse or keys to test modifiers.";
+    VNE_LOG_INFO
+        << "  Touch: LMB mimics touch (id=0). Hold Shift/Ctrl/Alt/Super and use mouse or keys to test modifiers.";
     VNE_LOG_INFO << "";
 
     bool running = true;
@@ -196,8 +205,8 @@ void GlfwIntegrationDemo::logInputPolling(int frame) {
     // Log every frame; optionally throttle by logging only when input active or every 60 frames
     bool any_active = (w | a | s | d | sp | lmb) != 0;
     if (any_active || (frame % 60 == 0)) {
-        VNE_LOG_INFO << "  [Input poll] W=" << w << " A=" << a << " S=" << s << " D=" << d
-                     << " Space=" << sp << " mouse=(" << mx << "," << my << ") LMB=" << lmb;
+        VNE_LOG_INFO << "  [Input poll] W=" << w << " A=" << a << " S=" << s << " D=" << d << " Space=" << sp
+                     << " mouse=(" << mx << "," << my << ") LMB=" << lmb;
     }
 }
 

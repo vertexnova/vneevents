@@ -18,7 +18,7 @@
 
 #include <thread>
 
-namespace  {
+namespace {
 CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.game_loop_integration")
 }
 
