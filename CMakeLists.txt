@@ -314,12 +314,14 @@ endif()
 # Installation
 #==============================================================================
 
-include(GNUInstallDirs)
-if(NOT CMAKE_INSTALL_INCLUDEDIR)
-    set(CMAKE_INSTALL_INCLUDEDIR "include")
-endif()
-
 if(NOT VNEVENTS_SKIP_INSTALL)
+    # Entire block is skipped when embedded as a subproject: avoid GNUInstallDirs /
+    # CMAKE_INSTALL_* side effects and iOS CMAKE_INSTALL_PREFIX overrides touching the parent.
+    include(GNUInstallDirs)
+    if(NOT CMAKE_INSTALL_INCLUDEDIR)
+        set(CMAKE_INSTALL_INCLUDEDIR "include")
+    endif()
+
     # Only adjust install prefix when this project owns install(); skip in subdependency mode
     # so the parent/superbuild keeps CMAKE_INSTALL_PREFIX.
     if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
