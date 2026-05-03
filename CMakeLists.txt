@@ -246,9 +246,19 @@ target_link_libraries(vneevents
         VneEventsBuildSettings
 )
 
-if(TARGET vne::common)
-    target_link_libraries(vneevents PRIVATE vne::common)
+# vnecommon is header-only: do not link it and do not use $<TARGET_PROPERTY:vnecommon,...>
+# on vneevents — CMake still treats that as an export dependency for install(EXPORT).
+# Copy INTERFACE_INCLUDE_DIRECTORIES at configure time so vneevents has no target edge.
+set(_VNEEVENTS_VNECOMMON_INC "")
+if(TARGET vnecommon)
+    get_target_property(_VNEEVENTS_VNECOMMON_INC vnecommon INTERFACE_INCLUDE_DIRECTORIES)
+elseif(TARGET vne::common)
+    get_target_property(_VNEEVENTS_VNECOMMON_INC vne::common INTERFACE_INCLUDE_DIRECTORIES)
 endif()
+if(_VNEEVENTS_VNECOMMON_INC AND NOT _VNEEVENTS_VNECOMMON_INC STREQUAL "INTERFACE_INCLUDE_DIRECTORIES-NOTFOUND")
+    target_include_directories(vneevents PRIVATE ${_VNEEVENTS_VNECOMMON_INC})
+endif()
+unset(_VNEEVENTS_VNECOMMON_INC)
 
 
 set_target_properties(vneevents PROPERTIES
@@ -314,6 +324,15 @@ if(NOT VNE_EVENTS_SKIP_INSTALL)
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
         FILES_MATCHING PATTERN "*.h"
     )
+
+    # Ship bundled header-only vnecommon with the package when the submodule is present
+    # (VNE_COMMON_SKIP_INSTALL skips vnecommon's own install rules when embedded here).
+    if(EXISTS "${VNE_LIBS_DIR}/vnecommon/include/vertexnova/common")
+        install(DIRECTORY "${VNE_LIBS_DIR}/vnecommon/include/vertexnova/common"
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
+            FILES_MATCHING PATTERN "*.h"
+        )
+    endif()
 
     install(EXPORT VneEventsTargets
         FILE VneEventsTargets.cmake
