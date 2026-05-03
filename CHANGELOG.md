@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/vertexnova/vneevents/compare/v1.1.0...v1.1.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* fixing the deploy libs and include issues. Fixes already applied in the vnecommon and vnelogging ([#6](https://github.com/vertexnova/vneevents/issues/6)) ([0ad32b5](https://github.com/vertexnova/vneevents/commit/0ad32b5e88fd4bb6e81d0757f0d49e578f55df4f))
+
 ## [1.1.0](https://github.com/vertexnova/vneevents/compare/v1.0.0...v1.1.0) (2026-05-03)
 
 
