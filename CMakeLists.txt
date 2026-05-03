@@ -319,22 +319,24 @@ if(NOT CMAKE_INSTALL_INCLUDEDIR)
     set(CMAKE_INSTALL_INCLUDEDIR "include")
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    if(DEFINED ENV{CI} AND DEFINED ENV{GITHUB_WORKSPACE})
-        file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" _VNE_GITHUB_WORKSPACE)
-        set(_VNE_IOS_CI_INSTALL_PREFIX "${_VNE_GITHUB_WORKSPACE}/install")
-        if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT
-                OR CMAKE_INSTALL_PREFIX STREQUAL "${CMAKE_BINARY_DIR}/install")
-            set(CMAKE_INSTALL_PREFIX "${_VNE_IOS_CI_INSTALL_PREFIX}"
-                CACHE PATH "Install prefix for iOS on CI (workspace/install)" FORCE)
-        endif()
-    elseif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install"
-            CACHE PATH "Install prefix for iOS builds (override with -DCMAKE_INSTALL_PREFIX)" FORCE)
-    endif()
-endif()
-
 if(NOT VNEVENTS_SKIP_INSTALL)
+    # Only adjust install prefix when this project owns install(); skip in subdependency mode
+    # so the parent/superbuild keeps CMAKE_INSTALL_PREFIX.
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        if(DEFINED ENV{CI} AND DEFINED ENV{GITHUB_WORKSPACE})
+            file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" _VNE_GITHUB_WORKSPACE)
+            set(_VNE_IOS_CI_INSTALL_PREFIX "${_VNE_GITHUB_WORKSPACE}/install")
+            if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT
+                    OR CMAKE_INSTALL_PREFIX STREQUAL "${CMAKE_BINARY_DIR}/install")
+                set(CMAKE_INSTALL_PREFIX "${_VNE_IOS_CI_INSTALL_PREFIX}"
+                    CACHE PATH "Install prefix for iOS on CI (workspace/install)" FORCE)
+            endif()
+        elseif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+            set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install"
+                CACHE PATH "Install prefix for iOS builds (override with -DCMAKE_INSTALL_PREFIX)" FORCE)
+        endif()
+    endif()
+
     include(CMakePackageConfigHelpers)
 
     install(TARGETS vneevents VneEventsWarnings VneEventsBuildSettings
