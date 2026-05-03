@@ -78,7 +78,14 @@ if(NOT TARGET vne::common)
         # vnecommon is header-only; we don't need its example executable
         set(VNEEVENTS_BUILD_EXAMPLES ${BUILD_EXAMPLES})
         set(BUILD_EXAMPLES OFF)
+        # Prefer ON when embedding; omit FORCE so a parent cache value is respected.
+        set(VNE_COMMON_SKIP_INSTALL ON CACHE BOOL
+            "Embedded vnecommon: skip its install; VneEvents ships common headers with its own install()."
+        )
         add_subdirectory(deps/internal/vnecommon)
+        set_property(CACHE VNE_COMMON_SKIP_INSTALL PROPERTY HELPSTRING
+            "Embedded vnecommon: skip its install; VneEvents ships common headers with its own install()."
+        )
         set(BUILD_EXAMPLES ${VNEEVENTS_BUILD_EXAMPLES})
     endif()
 endif()
@@ -87,6 +94,9 @@ endif()
 if(NOT TARGET vne::logging)
     if(EXISTS "${VNE_LIBS_DIR}/vnelogging/CMakeLists.txt")
         set(VNE_LOGGING_LIB_TYPE "${VNEEVENTS_LIB_TYPE}" CACHE STRING "" FORCE)
+        set(VNE_LOGGING_SKIP_INSTALL ON CACHE BOOL
+            "Embedded VneLogging: skip its install; avoid duplicate install/exports with VneEvents as the packager."
+        )
         message(STATUS "Using VneLogging from deps/internal/vnelogging (v1.0.0)")
         # Save current BUILD_TESTS and BUILD_EXAMPLES values
         set(VNEEVENTS_BUILD_TESTS ${BUILD_TESTS})
@@ -95,6 +105,9 @@ if(NOT TARGET vne::logging)
         set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
         add_subdirectory(${VNE_LIBS_DIR}/vnelogging ${CMAKE_BINARY_DIR}/deps/internal/vnelogging)
+        set_property(CACHE VNE_LOGGING_SKIP_INSTALL PROPERTY HELPSTRING
+            "Embedded VneLogging: skip its install; avoid duplicate install/exports with VneEvents as the packager."
+        )
         # Restore BUILD_TESTS and BUILD_EXAMPLES for vneevents
         set(BUILD_TESTS ${VNEEVENTS_BUILD_TESTS} CACHE BOOL "Build the test suite" FORCE)
         set(BUILD_EXAMPLES ${VNEEVENTS_BUILD_EXAMPLES} CACHE BOOL "Build example programs" FORCE)
@@ -114,6 +127,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_TESTS "Build the test suite" ON)
 option(BUILD_EXAMPLES "Build example programs" OFF)
+
+# Prefer VNEVENTS_SKIP_INSTALL (same prefix as VNEEVENTS_LIB_TYPE). Legacy name VNE_EVENTS_SKIP_INSTALL.
+if(DEFINED VNE_EVENTS_SKIP_INSTALL)
+    if(NOT DEFINED VNEVENTS_SKIP_INSTALL)
+        set(VNEVENTS_SKIP_INSTALL "${VNE_EVENTS_SKIP_INSTALL}" CACHE BOOL
+            "Skip VneEvents install() when this project is used as a subproject; parent/superbuild handles install."
+            FORCE)
+    endif()
+endif()
+option(VNEVENTS_SKIP_INSTALL
+    "Skip VneEvents install() when this project is used as a subproject; parent/superbuild handles install."
+    OFF)
+set(VNE_EVENTS_SKIP_INSTALL "${VNEVENTS_SKIP_INSTALL}" CACHE INTERNAL
+    "Deprecated alias for VNEEVENTS_SKIP_INSTALL (do not use in new CMake)."
+)
+
 option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 
 #==============================================================================
@@ -243,9 +272,19 @@ target_link_libraries(vneevents
         VneEventsBuildSettings
 )
 
-if(TARGET vne::common)
-    target_link_libraries(vneevents PUBLIC vne::common)
+# vnecommon is header-only: do not link it and do not use $<TARGET_PROPERTY:vnecommon,...>
+# on vneevents — CMake still treats that as an export dependency for install(EXPORT).
+# Copy INTERFACE_INCLUDE_DIRECTORIES at configure time so vneevents has no target edge.
+set(_VNEEVENTS_VNECOMMON_INC "")
+if(TARGET vnecommon)
+    get_target_property(_VNEEVENTS_VNECOMMON_INC vnecommon INTERFACE_INCLUDE_DIRECTORIES)
+elseif(TARGET vne::common)
+    get_target_property(_VNEEVENTS_VNECOMMON_INC vne::common INTERFACE_INCLUDE_DIRECTORIES)
 endif()
+if(_VNEEVENTS_VNECOMMON_INC AND NOT _VNEEVENTS_VNECOMMON_INC STREQUAL "INTERFACE_INCLUDE_DIRECTORIES-NOTFOUND")
+    target_include_directories(vneevents PRIVATE ${_VNEEVENTS_VNECOMMON_INC})
+endif()
+unset(_VNEEVENTS_VNECOMMON_INC)
 
 
 set_target_properties(vneevents PROPERTIES
@@ -275,102 +314,88 @@ endif()
 # Installation
 #==============================================================================
 
-include(GNUInstallDirs)
-if(NOT CMAKE_INSTALL_INCLUDEDIR)
-    set(CMAKE_INSTALL_INCLUDEDIR "include")
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    if(DEFINED ENV{CI} AND DEFINED ENV{GITHUB_WORKSPACE})
-        file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" _VNE_GITHUB_WORKSPACE)
-        set(_VNE_IOS_CI_INSTALL_PREFIX "${_VNE_GITHUB_WORKSPACE}/install")
-        if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT
-                OR CMAKE_INSTALL_PREFIX STREQUAL "${CMAKE_BINARY_DIR}/install")
-            set(CMAKE_INSTALL_PREFIX "${_VNE_IOS_CI_INSTALL_PREFIX}"
-                CACHE PATH "Install prefix for iOS on CI (workspace/install)" FORCE)
-        endif()
-    elseif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install"
-            CACHE PATH "Install prefix for iOS builds (override with -DCMAKE_INSTALL_PREFIX)" FORCE)
+if(NOT VNEVENTS_SKIP_INSTALL)
+    # Entire block is skipped when embedded as a subproject: avoid GNUInstallDirs /
+    # CMAKE_INSTALL_* side effects and iOS CMAKE_INSTALL_PREFIX overrides touching the parent.
+    include(GNUInstallDirs)
+    if(NOT CMAKE_INSTALL_INCLUDEDIR)
+        set(CMAKE_INSTALL_INCLUDEDIR "include")
     endif()
-endif()
 
-install(TARGETS vneevents VneEventsWarnings VneEventsBuildSettings
-    EXPORT VneEventsTargets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+    # Only adjust install prefix when this project owns install(); skip in subdependency mode
+    # so the parent/superbuild keeps CMAKE_INSTALL_PREFIX.
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        if(DEFINED ENV{CI} AND DEFINED ENV{GITHUB_WORKSPACE})
+            file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" _VNE_GITHUB_WORKSPACE)
+            set(_VNE_IOS_CI_INSTALL_PREFIX "${_VNE_GITHUB_WORKSPACE}/install")
+            if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT
+                    OR CMAKE_INSTALL_PREFIX STREQUAL "${CMAKE_BINARY_DIR}/install")
+                set(CMAKE_INSTALL_PREFIX "${_VNE_IOS_CI_INSTALL_PREFIX}"
+                    CACHE PATH "Install prefix for iOS on CI (workspace/install)" FORCE)
+            endif()
+        elseif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+            set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install"
+                CACHE PATH "Install prefix for iOS builds (override with -DCMAKE_INSTALL_PREFIX)" FORCE)
+        endif()
+    endif()
 
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/vertexnova/"
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
-    FILES_MATCHING PATTERN "*.h"
-)
+    include(CMakePackageConfigHelpers)
 
-set(VNECOMMON_PUBLIC_HEADERS_DIR
-    "${PROJECT_SOURCE_DIR}/deps/internal/vnecommon/include/vertexnova/common")
-if(EXISTS "${VNECOMMON_PUBLIC_HEADERS_DIR}")
-    install(DIRECTORY "${VNECOMMON_PUBLIC_HEADERS_DIR}/"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/common
+    install(TARGETS vneevents VneEventsWarnings VneEventsBuildSettings
+        EXPORT VneEventsTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/vertexnova/"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
         FILES_MATCHING PATTERN "*.h"
     )
-elseif(NOT TARGET vne::common)
-    message(WARNING
-        "Bundled vnecommon headers were not found at "
-        "'${VNECOMMON_PUBLIC_HEADERS_DIR}' and no target vne::common is available. "
-        "Skipping installation of vertexnova/common headers. "
-        "Provide an external vne::common (e.g. find_package before adding this project) or run "
-        "git submodule update --init on deps/internal/vnecommon if consumers need them.")
-endif()
 
-if(EXISTS "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/include/vertexnova/logging")
-    install(DIRECTORY "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/include/vertexnova/logging/"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/logging
-        FILES_MATCHING PATTERN "*.h"
+    # Ship bundled header-only vnecommon with the package when the submodule is present
+    # (VNE_COMMON_SKIP_INSTALL skips vnecommon's own install rules when embedded here).
+    if(EXISTS "${VNE_LIBS_DIR}/vnecommon/include/vertexnova/common")
+        install(DIRECTORY "${VNE_LIBS_DIR}/vnecommon/include/vertexnova/common"
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
+            FILES_MATCHING PATTERN "*.h"
+        )
+    endif()
+
+    install(EXPORT VneEventsTargets
+        FILE VneEventsTargets.cmake
+        NAMESPACE vne::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
     )
-endif()
-if(EXISTS "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/src/vertexnova/logging")
-    install(DIRECTORY "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/src/vertexnova/logging/"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/logging
-        FILES_MATCHING PATTERN "*.h"
+
+    configure_package_config_file(
+        "${PROJECT_SOURCE_DIR}/cmake/VneEventsConfig.cmake.in"
+        "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents"
     )
-endif()
 
-install(EXPORT VneEventsTargets
-    FILE VneEventsTargets.cmake
-    NAMESPACE vne::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
-)
+    write_basic_package_version_file(
+        "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+    )
 
-include(CMakePackageConfigHelpers)
+    install(FILES
+        "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
+        "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
+    )
 
-configure_package_config_file(
-    "${PROJECT_SOURCE_DIR}/cmake/VneEventsConfig.cmake.in"
-    "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents"
-)
+    install(FILES "${PROJECT_SOURCE_DIR}/cmake/FindVneEvents.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
+    )
 
-write_basic_package_version_file(
-    "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
-
-install(FILES
-    "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
-    "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
-)
-
-install(FILES "${PROJECT_SOURCE_DIR}/cmake/FindVneEvents.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
-)
-
-if(EXISTS "${PROJECT_SOURCE_DIR}/LICENSE")
-    install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION .)
-endif()
-if(EXISTS "${PROJECT_SOURCE_DIR}/CHANGELOG.md")
-    install(FILES "${PROJECT_SOURCE_DIR}/CHANGELOG.md" DESTINATION .)
+    if(EXISTS "${PROJECT_SOURCE_DIR}/LICENSE")
+        install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION .)
+    endif()
+    if(EXISTS "${PROJECT_SOURCE_DIR}/CHANGELOG.md")
+        install(FILES "${PROJECT_SOURCE_DIR}/CHANGELOG.md" DESTINATION .)
+    endif()
 endif()
