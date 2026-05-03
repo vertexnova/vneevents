@@ -78,6 +78,7 @@ if(NOT TARGET vne::common)
         # vnecommon is header-only; we don't need its example executable
         set(VNEEVENTS_BUILD_EXAMPLES ${BUILD_EXAMPLES})
         set(BUILD_EXAMPLES OFF)
+        set(VNE_COMMON_SKIP_INSTALL ON CACHE BOOL "" FORCE)
         add_subdirectory(deps/internal/vnecommon)
         set(BUILD_EXAMPLES ${VNEEVENTS_BUILD_EXAMPLES})
     endif()
@@ -87,6 +88,7 @@ endif()
 if(NOT TARGET vne::logging)
     if(EXISTS "${VNE_LIBS_DIR}/vnelogging/CMakeLists.txt")
         set(VNE_LOGGING_LIB_TYPE "${VNEEVENTS_LIB_TYPE}" CACHE STRING "" FORCE)
+        set(VNE_LOGGING_SKIP_INSTALL ON CACHE BOOL "" FORCE)
         message(STATUS "Using VneLogging from deps/internal/vnelogging (v1.0.0)")
         # Save current BUILD_TESTS and BUILD_EXAMPLES values
         set(VNEEVENTS_BUILD_TESTS ${BUILD_TESTS})
@@ -244,7 +246,7 @@ target_link_libraries(vneevents
 )
 
 if(TARGET vne::common)
-    target_link_libraries(vneevents PUBLIC vne::common)
+    target_link_libraries(vneevents PRIVATE vne::common)
 endif()
 
 
@@ -308,35 +310,6 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/vertexnova/"
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
     FILES_MATCHING PATTERN "*.h"
 )
-
-set(VNECOMMON_PUBLIC_HEADERS_DIR
-    "${PROJECT_SOURCE_DIR}/deps/internal/vnecommon/include/vertexnova/common")
-if(EXISTS "${VNECOMMON_PUBLIC_HEADERS_DIR}")
-    install(DIRECTORY "${VNECOMMON_PUBLIC_HEADERS_DIR}/"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/common
-        FILES_MATCHING PATTERN "*.h"
-    )
-elseif(NOT TARGET vne::common)
-    message(WARNING
-        "Bundled vnecommon headers were not found at "
-        "'${VNECOMMON_PUBLIC_HEADERS_DIR}' and no target vne::common is available. "
-        "Skipping installation of vertexnova/common headers. "
-        "Provide an external vne::common (e.g. find_package before adding this project) or run "
-        "git submodule update --init on deps/internal/vnecommon if consumers need them.")
-endif()
-
-if(EXISTS "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/include/vertexnova/logging")
-    install(DIRECTORY "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/include/vertexnova/logging/"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/logging
-        FILES_MATCHING PATTERN "*.h"
-    )
-endif()
-if(EXISTS "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/src/vertexnova/logging")
-    install(DIRECTORY "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/src/vertexnova/logging/"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/logging
-        FILES_MATCHING PATTERN "*.h"
-    )
-endif()
 
 install(EXPORT VneEventsTargets
     FILE VneEventsTargets.cmake
