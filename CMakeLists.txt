@@ -78,8 +78,14 @@ if(NOT TARGET vne::common)
         # vnecommon is header-only; we don't need its example executable
         set(VNEEVENTS_BUILD_EXAMPLES ${BUILD_EXAMPLES})
         set(BUILD_EXAMPLES OFF)
-        set(VNE_COMMON_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+        # Prefer ON when embedding; omit FORCE so a parent cache value is respected.
+        set(VNE_COMMON_SKIP_INSTALL ON CACHE BOOL
+            "Embedded vnecommon: skip its install; VneEvents ships common headers with its own install()."
+        )
         add_subdirectory(deps/internal/vnecommon)
+        set_property(CACHE VNE_COMMON_SKIP_INSTALL PROPERTY HELPSTRING
+            "Embedded vnecommon: skip its install; VneEvents ships common headers with its own install()."
+        )
         set(BUILD_EXAMPLES ${VNEEVENTS_BUILD_EXAMPLES})
     endif()
 endif()
@@ -88,7 +94,9 @@ endif()
 if(NOT TARGET vne::logging)
     if(EXISTS "${VNE_LIBS_DIR}/vnelogging/CMakeLists.txt")
         set(VNE_LOGGING_LIB_TYPE "${VNEEVENTS_LIB_TYPE}" CACHE STRING "" FORCE)
-        set(VNE_LOGGING_SKIP_INSTALL ON CACHE BOOL "" FORCE)
+        set(VNE_LOGGING_SKIP_INSTALL ON CACHE BOOL
+            "Embedded VneLogging: skip its install; avoid duplicate install/exports with VneEvents as the packager."
+        )
         message(STATUS "Using VneLogging from deps/internal/vnelogging (v1.0.0)")
         # Save current BUILD_TESTS and BUILD_EXAMPLES values
         set(VNEEVENTS_BUILD_TESTS ${BUILD_TESTS})
@@ -97,6 +105,9 @@ if(NOT TARGET vne::logging)
         set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
         add_subdirectory(${VNE_LIBS_DIR}/vnelogging ${CMAKE_BINARY_DIR}/deps/internal/vnelogging)
+        set_property(CACHE VNE_LOGGING_SKIP_INSTALL PROPERTY HELPSTRING
+            "Embedded VneLogging: skip its install; avoid duplicate install/exports with VneEvents as the packager."
+        )
         # Restore BUILD_TESTS and BUILD_EXAMPLES for vneevents
         set(BUILD_TESTS ${VNEEVENTS_BUILD_TESTS} CACHE BOOL "Build the test suite" FORCE)
         set(BUILD_EXAMPLES ${VNEEVENTS_BUILD_EXAMPLES} CACHE BOOL "Build example programs" FORCE)
