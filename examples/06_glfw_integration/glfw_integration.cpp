@@ -16,7 +16,6 @@
 namespace {
 CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.glfw_integration");
 
-
 uint8_t glfwModsToModifierKey(int mods) {
     uint8_t out = 0;
     if (mods & GLFW_MOD_SHIFT) {
@@ -36,26 +35,22 @@ uint8_t glfwModsToModifierKey(int mods) {
 
 uint8_t glfwQueryModifiers(GLFWwindow* w) {
     int mods = 0;
-    if (glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS
-        || glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+    if (glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
         mods |= GLFW_MOD_SHIFT;
     }
-    if (glfwGetKey(w, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS
-        || glfwGetKey(w, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
+    if (glfwGetKey(w, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
         mods |= GLFW_MOD_CONTROL;
     }
-    if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS
-        || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
+    if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
         mods |= GLFW_MOD_ALT;
     }
-    if (glfwGetKey(w, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS
-        || glfwGetKey(w, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS) {
+    if (glfwGetKey(w, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS) {
         mods |= GLFW_MOD_SUPER;
     }
     return glfwModsToModifierKey(mods);
 }
 
-} // namespace
+}  // namespace
 
 namespace vne::events::examples {
 
@@ -214,8 +209,8 @@ void GLFWIntegration::handleMouseButton(GLFWwindow* window, int button, int acti
             const double dx = x - last_click_x_[i];
             const double dy = y - last_click_y_[i];
             const double dist2 = dx * dx + dy * dy;
-            if (dt > 0.0 && dt <= kDoubleClickMaxIntervalSeconds_ &&
-                dist2 <= kDoubleClickMaxDistancePixels_ * kDoubleClickMaxDistancePixels_) {
+            if (dt > 0.0 && dt <= kDoubleClickMaxIntervalSeconds_
+                && dist2 <= kDoubleClickMaxDistancePixels_ * kDoubleClickMaxDistancePixels_) {
                 is_double_click = true;
             }
         }
@@ -235,8 +230,7 @@ void GLFWIntegration::handleMouseButton(GLFWwindow* window, int button, int acti
             event_manager_.pushEvent(std::make_unique<vne::events::TouchPressEvent>(0, x, y));
         }
         if (is_double_click) {
-            event_manager_.pushEvent(
-                std::make_unique<vne::events::MouseButtonDoubleClickedEvent>(b, m, x, y));
+            event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonDoubleClickedEvent>(b, m, x, y));
         }
     } else if (action == GLFW_RELEASE) {
         event_manager_.pushEvent(std::make_unique<vne::events::MouseButtonReleasedEvent>(b, m, x, y));

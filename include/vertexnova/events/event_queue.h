@@ -27,7 +27,7 @@ namespace vne::events {
  *
  * @threadsafe All public methods are thread-safe.
  */
-class EventQueue {
+class VNEEVENTS_API EventQueue {
    public:
     using EventPtr = std::unique_ptr<Event>;
 

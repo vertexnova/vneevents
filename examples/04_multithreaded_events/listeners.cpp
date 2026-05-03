@@ -13,7 +13,7 @@
 
 #include <vertexnova/logging/logging.h>
 
-namespace  {
+namespace {
 CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.multithreaded_events")
 }
 

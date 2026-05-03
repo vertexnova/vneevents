@@ -22,7 +22,7 @@ namespace vne::events {
  * @class KeyEvent
  * @brief Base class for keyboard events.
  */
-class KeyEvent : public Event {
+class VNEEVENTS_API KeyEvent : public Event {
    public:
     [[nodiscard]] KeyCode keyCode() const noexcept { return key_code_; }
     [[nodiscard]] uint8_t modifiers() const noexcept { return modifiers_; }
@@ -44,7 +44,7 @@ class KeyEvent : public Event {
  * @class KeyPressedEvent
  * @brief Event generated when a key is pressed.
  */
-class KeyPressedEvent : public KeyEvent {
+class VNEEVENTS_API KeyPressedEvent : public KeyEvent {
    public:
     explicit KeyPressedEvent(KeyCode key_code, uint8_t modifiers = 0)
         : KeyEvent(EventType::eKeyPressed, key_code, modifiers) {}
@@ -62,7 +62,7 @@ class KeyPressedEvent : public KeyEvent {
  * @class KeyReleasedEvent
  * @brief Event generated when a key is released.
  */
-class KeyReleasedEvent : public KeyEvent {
+class VNEEVENTS_API KeyReleasedEvent : public KeyEvent {
    public:
     explicit KeyReleasedEvent(KeyCode key_code, uint8_t modifiers = 0)
         : KeyEvent(EventType::eKeyReleased, key_code, modifiers) {}
@@ -80,7 +80,7 @@ class KeyReleasedEvent : public KeyEvent {
  * @class KeyRepeatEvent
  * @brief Event generated when a key is held and repeats.
  */
-class KeyRepeatEvent : public KeyEvent {
+class VNEEVENTS_API KeyRepeatEvent : public KeyEvent {
    public:
     KeyRepeatEvent(KeyCode key_code, uint32_t repeat_count)
         : KeyEvent(EventType::eKeyRepeat, key_code)
@@ -104,7 +104,7 @@ class KeyRepeatEvent : public KeyEvent {
  * @class KeyTypedEvent
  * @brief Event generated when a character is typed.
  */
-class KeyTypedEvent : public KeyEvent {
+class VNEEVENTS_API KeyTypedEvent : public KeyEvent {
    public:
     explicit KeyTypedEvent(KeyCode key_code)
         : KeyEvent(EventType::eKeyTyped, key_code) {}

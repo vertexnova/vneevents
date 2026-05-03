@@ -11,6 +11,9 @@ This directory contains build and platform scripts for the VneEvents library.
 | `build_windows.py`   | Build on Windows (MSVC)          |
 | `build_web.sh`       | Build for Web (Emscripten)       |
 | `build_ios.sh`       | Build for iOS (simulator/device) |
+| `ci_artifact_detail.sh` | Release tarball suffix (`ARTIFACT_DETAIL`) for CI; used by `release-please` |
+
+**Library type:** set **`VNEEVENTS_LIB_TYPE`** to `static` or `shared` (default **static** on Linux/macOS/Windows scripts, **static** on iOS, **shared** on `build_web.sh` unless overridden). This matches the nested **VneLogging** submodule build.
 
 ## Build Scripts
 

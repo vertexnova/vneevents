@@ -30,7 +30,7 @@ namespace vne::events {
  *
  * @threadsafe All public methods are thread-safe.
  */
-class EventDispatcher {
+class VNEEVENTS_API EventDispatcher {
    public:
     using ListenerPtr = std::shared_ptr<EventListener>;
 

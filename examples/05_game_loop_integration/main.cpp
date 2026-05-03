@@ -17,7 +17,7 @@
 #include <vertexnova/logging/logging.h>
 
 namespace {
-    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.game_loop_integration")
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.game_loop_integration")
 }
 
 using vne::events::examples::GameLoopDemo;

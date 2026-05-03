@@ -202,6 +202,9 @@ echo "$PLATFORM :: $COMPILER-${COMPILER_VERSION}"
 # Store project root directory
 PROJECT_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 
+# static | shared — aligns nested VneLogging when submodule is built (override with env)
+export VNEEVENTS_LIB_TYPE="${VNEEVENTS_LIB_TYPE:-static}"
+
 # Set the build directory based on build type and compiler
 BUILD_DIR="$PROJECT_ROOT/build/${BUILD_TYPE}/build-linux-$COMPILER-${COMPILER_VERSION}"
 
@@ -210,9 +213,9 @@ build_cmake_command() {
   local base_cmd=""
 
   if [ "$COMPILER" = "gcc" ]; then
-    base_cmd="cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DBUILD_TESTS=ON"
+    base_cmd="cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DVNEEVENTS_LIB_TYPE=$VNEEVENTS_LIB_TYPE -DBUILD_TESTS=ON"
   elif [ "$COMPILER" = "clang" ]; then
-    base_cmd="cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DBUILD_TESTS=ON"
+    base_cmd="cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DVNEEVENTS_LIB_TYPE=$VNEEVENTS_LIB_TYPE -DBUILD_TESTS=ON"
   fi
 
   echo "$base_cmd $PROJECT_ROOT"

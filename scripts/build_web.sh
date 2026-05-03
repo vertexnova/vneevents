@@ -269,6 +269,7 @@ if [[ "$FORCE_REBUILD" == true ]] || [[ ! -f "CMakeCache.txt" ]] || ! grep -q "E
         -G "Unix Makefiles" \
         -DCMAKE_TOOLCHAIN_FILE="$EMSDK_DIR/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" \
         -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+        -DVNEEVENTS_LIB_TYPE="${VNEEVENTS_LIB_TYPE:-shared}" \
         -DBUILD_TESTS=ON
 
     # Verify Emscripten toolchain is being used

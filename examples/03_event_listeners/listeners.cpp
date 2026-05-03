@@ -14,7 +14,7 @@
 #include <vertexnova/logging/logging.h>
 
 namespace {
-    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.event_listeners")
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.event_listeners")
 }
 
 namespace vne::events::examples {
@@ -41,16 +41,14 @@ void GameplayListener::onEvent(const vne::events::Event& event) {
 }
 
 void InputListener::onEvent(const vne::events::Event& event) {
-    if (event.type() == vne::events::EventType::eKeyPressed ||
-        event.type() == vne::events::EventType::eKeyReleased ||
-        event.type() == vne::events::EventType::eMouseButtonPressed) {
+    if (event.type() == vne::events::EventType::eKeyPressed || event.type() == vne::events::EventType::eKeyReleased
+        || event.type() == vne::events::EventType::eMouseButtonPressed) {
         VNE_LOG_INFO << "  [Input] Handling input event: " << event.name();
     }
 }
 
 void WindowListener::onEvent(const vne::events::Event& event) {
-    if (event.type() == vne::events::EventType::eWindowResize ||
-        event.type() == vne::events::EventType::eWindowClose) {
+    if (event.type() == vne::events::EventType::eWindowResize || event.type() == vne::events::EventType::eWindowClose) {
         VNE_LOG_INFO << "  [Window] Handling window event: " << event.name();
     }
 }
@@ -58,7 +56,8 @@ void WindowListener::onEvent(const vne::events::Event& event) {
 void RenderListener::onEvent(const vne::events::Event& event) {
     if (event.type() == vne::events::EventType::eWindowResize) {
         const auto& resize_event = static_cast<const vne::events::WindowResizeEvent&>(event);
-        VNE_LOG_INFO << "  [Render] Resizing render target to: " << resize_event.width() << "x" << resize_event.height();
+        VNE_LOG_INFO << "  [Render] Resizing render target to: " << resize_event.width() << "x"
+                     << resize_event.height();
     }
 }
 

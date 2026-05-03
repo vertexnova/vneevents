@@ -10,6 +10,8 @@
  * ----------------------------------------------------------------------
  */
 
+#include "export.h"
+
 namespace vne::events {
 
 // Forward declaration
@@ -22,7 +24,7 @@ class Event;
  * Classes implementing EventListener can subscribe to specific event types
  * and define custom behavior to handle those events.
  */
-class EventListener {
+class VNEEVENTS_API EventListener {
    public:
     virtual ~EventListener() = default;
 

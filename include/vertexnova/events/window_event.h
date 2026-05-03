@@ -22,7 +22,7 @@ namespace vne::events {
  * @class WindowCloseEvent
  * @brief Event generated when a window is closed.
  */
-class WindowCloseEvent : public Event {
+class VNEEVENTS_API WindowCloseEvent : public Event {
    public:
     WindowCloseEvent()
         : Event(EventType::eWindowClose) {}
@@ -38,7 +38,7 @@ class WindowCloseEvent : public Event {
  * @class WindowResizeEvent
  * @brief Event generated when a window is resized.
  */
-class WindowResizeEvent : public Event {
+class VNEEVENTS_API WindowResizeEvent : public Event {
    public:
     WindowResizeEvent(uint32_t width, uint32_t height)
         : Event(EventType::eWindowResize)

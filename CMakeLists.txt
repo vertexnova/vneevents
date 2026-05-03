@@ -19,6 +19,45 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+
+#==============================================================================
+# Library type (must be set before add_subdirectory(vnelogging))
+#==============================================================================
+set(VNEEVENTS_LIB_TYPE "static" CACHE STRING "VneEvents library type: static or shared (one build directory)")
+set_property(CACHE VNEEVENTS_LIB_TYPE PROPERTY STRINGS static shared)
+if(NOT VNEEVENTS_LIB_TYPE STREQUAL "static" AND NOT VNEEVENTS_LIB_TYPE STREQUAL "shared")
+    message(FATAL_ERROR "VNEEVENTS_LIB_TYPE must be 'static' or 'shared'. Got: ${VNEEVENTS_LIB_TYPE}")
+endif()
+
+if(VNEEVENTS_LIB_TYPE STREQUAL "shared")
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    set(_VNEEVENTS_LIB_KIND SHARED)
+else()
+    set(_VNEEVENTS_LIB_KIND STATIC)
+endif()
+
+message(STATUS "VneEvents: VNEEVENTS_LIB_TYPE=${VNEEVENTS_LIB_TYPE}")
+
+function(vneevents_apply_shared_export target_name)
+    get_target_property(_vne_ev_kind "${target_name}" TYPE)
+    if(NOT _vne_ev_kind STREQUAL "SHARED_LIBRARY")
+        return()
+    endif()
+    target_compile_definitions(${target_name}
+        PRIVATE VNEEVENTS_BUILDING_DLL
+        INTERFACE VNEEVENTS_DLL
+    )
+    if(MSVC)
+        target_compile_options(${target_name} PRIVATE /wd4251 /wd4275)
+    else()
+        set_target_properties(${target_name} PROPERTIES
+            CXX_VISIBILITY_PRESET hidden
+            VISIBILITY_INLINES_HIDDEN ON
+        )
+    endif()
+endfunction()
+
 #==============================================================================
 # Add vnecmake submodule modules directory if present (preserve prior behavior
 # from deps/external/vnecmake/modules now that submodule lives at cmake/vnecmake)
@@ -47,7 +86,7 @@ endif()
 # VneLogging - v1.0.0 (provide VneUseDep from vneevents so vnelogging submodule stays clean)
 if(NOT TARGET vne::logging)
     if(EXISTS "${VNE_LIBS_DIR}/vnelogging/CMakeLists.txt")
-        list(PREPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+        set(VNE_LOGGING_LIB_TYPE "${VNEEVENTS_LIB_TYPE}" CACHE STRING "" FORCE)
         message(STATUS "Using VneLogging from deps/internal/vnelogging (v1.0.0)")
         # Save current BUILD_TESTS and BUILD_EXAMPLES values
         set(VNEEVENTS_BUILD_TESTS ${BUILD_TESTS})
@@ -157,11 +196,14 @@ set(VNE_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 #==============================================================================
 
 set(VNEEVENTS_SOURCES
+    ${VNE_SRC_DIR}/vertexnova/events/vneevents_shared_exports.cpp
+    ${VNE_SRC_DIR}/vertexnova/events/input/input.cpp
     ${VNE_SRC_DIR}/vertexnova/events/input/input_state.cpp
     ${VNE_SRC_DIR}/vertexnova/events/input/input_manager.cpp
 )
 
 set(VNEEVENTS_HEADERS
+    ${VNE_INCLUDE_DIR}/vertexnova/events/export.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/events.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/types.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/event.h
@@ -184,8 +226,10 @@ set(VNEEVENTS_HEADERS
 # Library Target
 #==============================================================================
 
-add_library(vneevents ${VNEEVENTS_SOURCES} ${VNEEVENTS_HEADERS})
+add_library(vneevents ${_VNEEVENTS_LIB_KIND} ${VNEEVENTS_SOURCES} ${VNEEVENTS_HEADERS})
 add_library(vne::events ALIAS vneevents)
+
+vneevents_apply_shared_export(vneevents)
 
 target_include_directories(vneevents
     PUBLIC
@@ -232,22 +276,101 @@ endif()
 #==============================================================================
 
 include(GNUInstallDirs)
+if(NOT CMAKE_INSTALL_INCLUDEDIR)
+    set(CMAKE_INSTALL_INCLUDEDIR "include")
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    if(DEFINED ENV{CI} AND DEFINED ENV{GITHUB_WORKSPACE})
+        file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}" _VNE_GITHUB_WORKSPACE)
+        set(_VNE_IOS_CI_INSTALL_PREFIX "${_VNE_GITHUB_WORKSPACE}/install")
+        if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT
+                OR CMAKE_INSTALL_PREFIX STREQUAL "${CMAKE_BINARY_DIR}/install")
+            set(CMAKE_INSTALL_PREFIX "${_VNE_IOS_CI_INSTALL_PREFIX}"
+                CACHE PATH "Install prefix for iOS on CI (workspace/install)" FORCE)
+        endif()
+    elseif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+        set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install"
+            CACHE PATH "Install prefix for iOS builds (override with -DCMAKE_INSTALL_PREFIX)" FORCE)
+    endif()
+endif()
 
 install(TARGETS vneevents VneEventsWarnings VneEventsBuildSettings
     EXPORT VneEventsTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(DIRECTORY include/vertexnova/
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/vertexnova/"
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
     FILES_MATCHING PATTERN "*.h"
 )
+
+set(VNECOMMON_PUBLIC_HEADERS_DIR
+    "${PROJECT_SOURCE_DIR}/deps/internal/vnecommon/include/vertexnova/common")
+if(EXISTS "${VNECOMMON_PUBLIC_HEADERS_DIR}")
+    install(DIRECTORY "${VNECOMMON_PUBLIC_HEADERS_DIR}/"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/common
+        FILES_MATCHING PATTERN "*.h"
+    )
+elseif(NOT TARGET vne::common)
+    message(WARNING
+        "Bundled vnecommon headers were not found at "
+        "'${VNECOMMON_PUBLIC_HEADERS_DIR}' and no target vne::common is available. "
+        "Skipping installation of vertexnova/common headers. "
+        "Provide an external vne::common (e.g. find_package before adding this project) or run "
+        "git submodule update --init on deps/internal/vnecommon if consumers need them.")
+endif()
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/include/vertexnova/logging")
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/include/vertexnova/logging/"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/logging
+        FILES_MATCHING PATTERN "*.h"
+    )
+endif()
+if(EXISTS "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/src/vertexnova/logging")
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/deps/internal/vnelogging/src/vertexnova/logging/"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova/logging
+        FILES_MATCHING PATTERN "*.h"
+    )
+endif()
 
 install(EXPORT VneEventsTargets
     FILE VneEventsTargets.cmake
     NAMESPACE vne::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
 )
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/VneEventsConfig.cmake.in"
+    "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents"
+)
+
+write_basic_package_version_file(
+    "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
+    "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
+)
+
+install(FILES "${PROJECT_SOURCE_DIR}/cmake/FindVneEvents.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
+)
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/LICENSE")
+    install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION .)
+endif()
+if(EXISTS "${PROJECT_SOURCE_DIR}/CHANGELOG.md")
+    install(FILES "${PROJECT_SOURCE_DIR}/CHANGELOG.md" DESTINATION .)
+endif()

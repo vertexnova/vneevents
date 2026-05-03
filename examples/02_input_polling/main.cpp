@@ -17,7 +17,7 @@
 #include <vertexnova/logging/logging.h>
 
 namespace {
-    CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.input_polling")
+CREATE_VNE_LOGGER_CATEGORY("vneevents.examples.input_polling")
 }
 
 using vne::events::examples::InputDemo;
