@@ -125,7 +125,7 @@ def run_clang_format(files: list, style_file: Path, dry_run: bool = False) -> bo
 def main():
     """Main function."""
     parser = argparse.ArgumentParser(
-        description="Format C/C++ source files using clang-format with VneLogging rules",
+        description="Format C/C++ source files using clang-format with VneEvents rules (.clang-format)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -144,7 +144,7 @@ Examples:
     )
     group.add_argument(
         '--file',
-        help='Specific file to format (e.g., src/vertexnova/logging/logging.cpp)'
+        help='Specific file to format (e.g., src/vertexnova/events/input/input.cpp)'
     )
 
     parser.add_argument(
@@ -170,7 +170,7 @@ Examples:
         print(f"Warning: .clang-format not found at {style_file}")
         print("Using fallback style: Google")
 
-    print("VneLogging Clang Formatter")
+    print("VneEvents Clang Formatter")
     print("=" * 40)
     if style_file.exists():
         print(f"Style file: {style_file}")

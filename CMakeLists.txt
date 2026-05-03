@@ -341,6 +341,26 @@ install(EXPORT VneEventsTargets
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
 )
 
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/VneEventsConfig.cmake.in"
+    "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents"
+)
+
+write_basic_package_version_file(
+    "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
+    "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
+)
+
 install(FILES "${PROJECT_SOURCE_DIR}/cmake/FindVneEvents.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
 )

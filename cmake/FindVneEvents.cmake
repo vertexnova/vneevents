@@ -12,14 +12,52 @@
 # Usage:
 #   find_package(VneEvents REQUIRED)
 #   target_link_libraries(app PRIVATE vne::events)
+#
+# This module may live at:
+#   - <prefix>/<libdir>/cmake/VneEvents/FindVneEvents.cmake (installed)
+#   - <repo>/cmake/FindVneEvents.cmake (source checkout on CMAKE_MODULE_PATH)
+#
+# Search hints must not assume a fixed depth (../../include breaks once installed:
+# that resolves to <prefix>/lib/include). We walk upward until we find the public
+# header tree at include/vertexnova/events/events.h, then use that prefix for lib/.
 #==============================================================================
 
 include(FindPackageHandleStandardArgs)
 
+# Discover install / checkout prefix by walking parents of this file's directory.
+set(_VneEvents_search_prefix "")
+set(_VneEvents_probe "${CMAKE_CURRENT_LIST_DIR}")
+foreach(_vne_i RANGE 1 12)
+    if(EXISTS "${_VneEvents_probe}/include/vertexnova/events/events.h")
+        get_filename_component(_VneEvents_search_prefix "${_VneEvents_probe}" ABSOLUTE)
+        break()
+    endif()
+    get_filename_component(_VneEvents_parent "${_VneEvents_probe}" DIRECTORY)
+    if(_VneEvents_parent STREQUAL _VneEvents_probe OR _VneEvents_parent STREQUAL "")
+        break()
+    endif()
+    set(_VneEvents_probe "${_VneEvents_parent}")
+endforeach()
+
+set(_VneEvents_include_paths "")
+set(_VneEvents_library_paths "")
+if(_VneEvents_search_prefix)
+    list(APPEND _VneEvents_include_paths "${_VneEvents_search_prefix}/include")
+    list(APPEND _VneEvents_library_paths
+        "${_VneEvents_search_prefix}/lib"
+        "${_VneEvents_search_prefix}/lib64"
+    )
+    if(CMAKE_LIBRARY_ARCHITECTURE)
+        list(APPEND _VneEvents_library_paths
+            "${_VneEvents_search_prefix}/lib/${CMAKE_LIBRARY_ARCHITECTURE}"
+        )
+    endif()
+endif()
+
 find_path(VneEvents_INCLUDE_DIR
     NAMES vertexnova/events/events.h
     PATHS
-        ${CMAKE_CURRENT_LIST_DIR}/../../include
+        ${_VneEvents_include_paths}
         ${CMAKE_INSTALL_PREFIX}/include
         /usr/local/include
 )
@@ -27,8 +65,9 @@ find_path(VneEvents_INCLUDE_DIR
 find_library(VneEvents_LIBRARY
     NAMES VneEvents vneevents
     PATHS
-        ${CMAKE_CURRENT_LIST_DIR}/../../lib
+        ${_VneEvents_library_paths}
         ${CMAKE_INSTALL_PREFIX}/lib
+        ${CMAKE_INSTALL_PREFIX}/lib64
         /usr/local/lib
 )
 
@@ -91,3 +130,9 @@ if(VneEvents_FOUND)
 endif()
 
 mark_as_advanced(VneEvents_INCLUDE_DIR VneEvents_LIBRARY)
+
+unset(_VneEvents_search_prefix)
+unset(_VneEvents_probe)
+unset(_VneEvents_parent)
+unset(_VneEvents_include_paths)
+unset(_VneEvents_library_paths)
