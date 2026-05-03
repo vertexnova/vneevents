@@ -61,4 +61,5 @@
 #include "touch_event.h"
 
 // Input polling
+#include "input/input_manager.h"
 #include "input/input.h"
