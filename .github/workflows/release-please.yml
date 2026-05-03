@@ -276,11 +276,6 @@ jobs:
             echo "::error::No vneevents headers under install/include/vertexnova/events."
             exit 1
           fi
-          if [[ ! -d "$INSTALL/include/vertexnova/logging" ]]; then
-            echo "::error::Expected install/include/vertexnova/logging missing."
-            find "$INSTALL" -type f 2>/dev/null | sort | head -50
-            exit 1
-          fi
           if [[ ! -d "$INSTALL/include/vertexnova/common" ]]; then
             echo "::error::Expected install/include/vertexnova/common missing (vnecommon headers must ship in the tarball)."
             find "$INSTALL" -type f 2>/dev/null | sort | head -50

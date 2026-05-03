@@ -10,7 +10,7 @@ Configure **publish** with **`VNEEVENTS_LIB_TYPE`** (`shared` for desktop/web/an
 
 ## Install layout
 
-Tarballs include **`include/vertexnova/events/`** (with **`export.h`**), **`vertexnova/common/`**, **`vertexnova/logging/`** (from the bundled **vnelogging** tree when present), **`lib/`** (`libvneevents` / `.dll` / `.dylib` / `.so`), **`LICENSE`**, **`CHANGELOG.md`**, and **`lib/cmake/VneEvents/`** (`VneEventsTargets.cmake`, **`FindVneEvents.cmake`**).
+Tarballs include **`include/vertexnova/events/`** (with **`export.h`**), **`vertexnova/common/`** (bundled header-only **vnecommon**), **`lib/`** (`libvneevents` / `.dll` / `.dylib` / `.so`), **`LICENSE`**, **`CHANGELOG.md`**, and **`lib/cmake/VneEvents/`** (`VneEventsTargets.cmake`, **`FindVneEvents.cmake`**). **VneLogging** is linked at build time when embedded; its headers are **not** installed by VneEvents (`VNE_LOGGING_SKIP_INSTALL`) — use **`find_package(VneLogging)`** (or your dependency layout) for **`vertexnova/logging/`** includes.
 
 ## Artifact naming
 
