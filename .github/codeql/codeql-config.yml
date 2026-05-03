@@ -1,0 +1,8 @@
+# ----------------------------------------------------------------------
+# CodeQL configuration for VneEvents — exclude vendored deps from analysis.
+# ----------------------------------------------------------------------
+
+name: vneevents CodeQL config
+
+paths-ignore:
+  - "deps/external/**"

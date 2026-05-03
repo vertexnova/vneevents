@@ -2,7 +2,16 @@
 # Copyright (c) 2026 Ajeet Singh Yadav. All rights reserved.
 # Licensed under the Apache License, Version 2.0 (the "License")
 #
-# CI: static + shared (VNEEVENTS_LIB_TYPE), release-please skip, optional iOS install smoke.
+# Author:    Ajeet Singh Yadav
+# Created:   January 2026
+#
+# Autodoc:   yes
+# ----------------------------------------------------------------------
+#
+# Pre-checks: clang-format (gate). Build+Test: Linux GCC/Clang, coverage (Codecov),
+# macOS, Windows; optional iOS install smoke. Analysis: clang-tidy (Clang +
+# compile_commands). Release-only pushes skip heavy jobs.
+# See also: .github/workflows/codeql.yml, release-please.yml, delete-merged-branch.yml
 # ----------------------------------------------------------------------
 
 name: CI
@@ -318,6 +327,48 @@ jobs:
           test -d "${GITHUB_WORKSPACE}/install/include/vertexnova/common"
           test -n "$(find "${GITHUB_WORKSPACE}/install" -name '*.a' -print -quit)"
 
+  clang-tidy:
+    name: "Analysis / clang-tidy"
+    needs: [detect-release, pre-checks-gate]
+    if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install clang, clang-tidy
+        run: sudo apt-get update -qq && sudo apt-get install -y build-essential cmake clang clang-tidy
+
+      - name: Configure CMake (compile_commands for clang-tidy)
+        run: |
+          cmake -B build/static/Release -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DVNEEVENTS_LIB_TYPE=static \
+            -DBUILD_TESTS=ON \
+            -DENABLE_IPO=OFF \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build/static/Release --config Release --parallel
+
+      - name: Run clang-tidy (project .clang-tidy)
+        run: |
+          find src -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
+            | xargs -0 -r clang-tidy -p build/static/Release
+
+      - name: Write clang-tidy summary
+        if: always()
+        run: |
+          echo "## clang-tidy" >> "$GITHUB_STEP_SUMMARY"
+          echo "Analyzed \`src/\` with \`build/static/Release/compile_commands.json\`" >> "$GITHUB_STEP_SUMMARY"
+
   ci-gate:
     name: "CI Gate"
     runs-on: ubuntu-latest
@@ -330,6 +381,7 @@ jobs:
       - macos
       - windows
       - build-ios
+      - clang-tidy
 
     steps:
       - name: Check required jobs passed
@@ -342,6 +394,7 @@ jobs:
             "macos=${{ needs.macos.result }}"
             "windows=${{ needs.windows.result }}"
             "build-ios=${{ needs.build-ios.result }}"
+            "clang-tidy=${{ needs.clang-tidy.result }}"
           )
           FAILED=0
           for entry in "${RESULTS[@]}"; do
