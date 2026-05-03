@@ -127,7 +127,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_TESTS "Build the test suite" ON)
 option(BUILD_EXAMPLES "Build example programs" OFF)
-option(VNE_EVENTS_SKIP_INSTALL "Skip install rules when used as a subdependency" OFF)
+
+# Prefer VNEVENTS_SKIP_INSTALL (same prefix as VNEEVENTS_LIB_TYPE). Legacy name VNE_EVENTS_SKIP_INSTALL.
+if(DEFINED VNE_EVENTS_SKIP_INSTALL)
+    if(NOT DEFINED VNEVENTS_SKIP_INSTALL)
+        set(VNEVENTS_SKIP_INSTALL "${VNE_EVENTS_SKIP_INSTALL}" CACHE BOOL
+            "Skip VneEvents install() when this project is used as a subproject; parent/superbuild handles install."
+            FORCE)
+    endif()
+endif()
+option(VNEVENTS_SKIP_INSTALL
+    "Skip VneEvents install() when this project is used as a subproject; parent/superbuild handles install."
+    OFF)
+set(VNE_EVENTS_SKIP_INSTALL "${VNEVENTS_SKIP_INSTALL}" CACHE INTERNAL
+    "Deprecated alias for VNEEVENTS_SKIP_INSTALL (do not use in new CMake)."
+)
+
 option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 
 #==============================================================================
@@ -319,7 +334,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     endif()
 endif()
 
-if(NOT VNE_EVENTS_SKIP_INSTALL)
+if(NOT VNEVENTS_SKIP_INSTALL)
     include(CMakePackageConfigHelpers)
 
     install(TARGETS vneevents VneEventsWarnings VneEventsBuildSettings
