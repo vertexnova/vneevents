@@ -116,6 +116,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_TESTS "Build the test suite" ON)
 option(BUILD_EXAMPLES "Build example programs" OFF)
+option(VNE_EVENTS_SKIP_INSTALL "Skip install rules when used as a subdependency" OFF)
 option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 
 #==============================================================================
@@ -297,53 +298,55 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     endif()
 endif()
 
-install(TARGETS vneevents VneEventsWarnings VneEventsBuildSettings
-    EXPORT VneEventsTargets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+if(NOT VNE_EVENTS_SKIP_INSTALL)
+    include(CMakePackageConfigHelpers)
 
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/vertexnova/"
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
-    FILES_MATCHING PATTERN "*.h"
-)
+    install(TARGETS vneevents VneEventsWarnings VneEventsBuildSettings
+        EXPORT VneEventsTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
 
-install(EXPORT VneEventsTargets
-    FILE VneEventsTargets.cmake
-    NAMESPACE vne::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
-)
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/vertexnova/"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vertexnova
+        FILES_MATCHING PATTERN "*.h"
+    )
 
-include(CMakePackageConfigHelpers)
+    install(EXPORT VneEventsTargets
+        FILE VneEventsTargets.cmake
+        NAMESPACE vne::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
+    )
 
-configure_package_config_file(
-    "${PROJECT_SOURCE_DIR}/cmake/VneEventsConfig.cmake.in"
-    "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents"
-)
+    configure_package_config_file(
+        "${PROJECT_SOURCE_DIR}/cmake/VneEventsConfig.cmake.in"
+        "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents"
+    )
 
-write_basic_package_version_file(
-    "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
+    write_basic_package_version_file(
+        "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+    )
 
-install(FILES
-    "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
-    "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
-)
+    install(FILES
+        "${PROJECT_BINARY_DIR}/VneEventsConfig.cmake"
+        "${PROJECT_BINARY_DIR}/VneEventsConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
+    )
 
-install(FILES "${PROJECT_SOURCE_DIR}/cmake/FindVneEvents.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
-)
+    install(FILES "${PROJECT_SOURCE_DIR}/cmake/FindVneEvents.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/VneEvents
+    )
 
-if(EXISTS "${PROJECT_SOURCE_DIR}/LICENSE")
-    install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION .)
-endif()
-if(EXISTS "${PROJECT_SOURCE_DIR}/CHANGELOG.md")
-    install(FILES "${PROJECT_SOURCE_DIR}/CHANGELOG.md" DESTINATION .)
+    if(EXISTS "${PROJECT_SOURCE_DIR}/LICENSE")
+        install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION .)
+    endif()
+    if(EXISTS "${PROJECT_SOURCE_DIR}/CHANGELOG.md")
+        install(FILES "${PROJECT_SOURCE_DIR}/CHANGELOG.md" DESTINATION .)
+    endif()
 endif()
