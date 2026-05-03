@@ -196,6 +196,7 @@ set(VNE_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 #==============================================================================
 
 set(VNEEVENTS_SOURCES
+    ${VNE_SRC_DIR}/vertexnova/events/input/input.cpp
     ${VNE_SRC_DIR}/vertexnova/events/input/input_state.cpp
     ${VNE_SRC_DIR}/vertexnova/events/input/input_manager.cpp
 )
