@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/vertexnova/vneevents/compare/v1.1.1...v1.1.2) (2026-05-03)
+
+
+### Bug Fixes
+
+* Fixing release build. ([#8](https://github.com/vertexnova/vneevents/issues/8)) ([79aac0f](https://github.com/vertexnova/vneevents/commit/79aac0f8a5444f9ed1f7d3ebfeeab39aa61bee25))
+
 ## [1.1.1](https://github.com/vertexnova/vneevents/compare/v1.1.0...v1.1.1) (2026-05-03)
 
 
