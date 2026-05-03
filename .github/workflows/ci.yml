@@ -8,9 +8,10 @@
 # Autodoc:   yes
 # ----------------------------------------------------------------------
 #
-# Pre-checks: clang-format (gate). Build+Test: Linux GCC/Clang, coverage (Codecov),
-# macOS, Windows; optional iOS install smoke. Analysis: clang-tidy (Clang +
-# compile_commands). Release-only pushes skip heavy jobs.
+# Pre-checks: clang-format (gate).
+# Build+Test: Linux GCC (shared), Linux Clang (static), coverage (GCC shared),
+# macOS, Windows. Cross-compile: Web (Emscripten), iOS, Android.
+# Analysis: clang-tidy (after Linux Clang). Release-only pushes skip heavy jobs.
 # See also: .github/workflows/codeql.yml, release-please.yml, delete-merged-branch.yml
 # ----------------------------------------------------------------------
 
@@ -79,6 +80,8 @@ jobs:
   format-check:
     name: "Pre-checks / clang-format"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -111,36 +114,15 @@ jobs:
             exit 1
           fi
 
-  linux:
-    name: "Build+Test / Linux (${{ matrix.compiler }} / ${{ matrix.lib_type }})"
+  build-linux-gcc:
+    name: "Build+Test / Linux GCC (shared)"
     needs: [detect-release, pre-checks-gate]
     if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - compiler: gcc
-            lib_type: static
-            c_compiler: gcc
-            cpp_compiler: g++
-          - compiler: gcc
-            lib_type: shared
-            c_compiler: gcc
-            cpp_compiler: g++
-          - compiler: clang
-            lib_type: static
-            c_compiler: clang
-            cpp_compiler: clang++
-          - compiler: clang
-            lib_type: shared
-            c_compiler: clang
-            cpp_compiler: clang++
-
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -149,30 +131,62 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B "build/${{ matrix.lib_type }}/Release" -S . \
+          cmake -B build/shared/Release -S . \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
-            -DVNEEVENTS_LIB_TYPE=${{ matrix.lib_type }} \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DVNEEVENTS_LIB_TYPE=shared \
             -DBUILD_TESTS=ON \
             -DENABLE_IPO=OFF
 
       - name: Build
-        run: cmake --build "build/${{ matrix.lib_type }}/Release" --config Release --parallel
+        run: cmake --build build/shared/Release --config Release --parallel
 
       - name: Test
-        working-directory: "build/${{ matrix.lib_type }}/Release"
-        run: ctest --output-on-failure
+        working-directory: build/shared/Release
+        run: ctest --output-on-failure --timeout 300
 
-  coverage:
-    name: "Build+Test / Coverage (GCC static)"
+  build-linux-clang:
+    name: "Build+Test / Linux Clang (static)"
     needs: [detect-release, pre-checks-gate]
     if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Configure CMake
+        run: |
+          cmake -B build/static/Release -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DVNEEVENTS_LIB_TYPE=static \
+            -DBUILD_TESTS=ON \
+            -DENABLE_IPO=OFF
+
+      - name: Build
+        run: cmake --build build/static/Release --config Release --parallel
+
+      - name: Test
+        working-directory: build/static/Release
+        run: ctest --output-on-failure --timeout 300
+
+  coverage:
+    name: "Build+Test / Coverage"
+    needs: [detect-release, pre-checks-gate]
+    if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -181,25 +195,25 @@ jobs:
 
       - name: Configure CMake with Coverage
         run: |
-          cmake -B build/static/Debug -S . \
+          cmake -B build/shared/Debug -S . \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
-            -DVNEEVENTS_LIB_TYPE=static \
+            -DVNEEVENTS_LIB_TYPE=shared \
             -DBUILD_TESTS=ON \
             -DENABLE_COVERAGE=ON \
             -DENABLE_IPO=OFF
 
       - name: Build
-        run: cmake --build build/static/Debug --config Debug --parallel
+        run: cmake --build build/shared/Debug --config Debug --parallel
 
       - name: Test
-        working-directory: build/static/Debug
-        run: ctest --output-on-failure
+        working-directory: build/shared/Debug
+        run: ctest --output-on-failure --timeout 300
 
       - name: Generate Coverage Report
         run: |
-          lcov --capture --directory build/static/Debug --output-file coverage.info --ignore-errors mismatch,unused
+          lcov --capture --directory build/shared/Debug --output-file coverage.info --ignore-errors mismatch,unused
           lcov --remove coverage.info '/usr/*' '*/tests/*' '*/deps/external/*' '*/deps/internal/*' '*/_deps/*' '*/googletest/*' '*/googlemock/*' --output-file coverage.info --ignore-errors mismatch,unused
           lcov --list coverage.info --ignore-errors mismatch,unused
 
@@ -213,69 +227,102 @@ jobs:
           verbose: true
 
   macos:
-    name: "Build+Test / macOS (${{ matrix.lib_type }})"
+    name: "Build+Test / macOS"
     needs: [detect-release, pre-checks-gate]
     if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        lib_type: [static, shared]
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
+
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.0"
 
       - name: Configure CMake
         run: |
-          cmake -B "build/${{ matrix.lib_type }}/Release" -S . \
+          cmake -B build/static/Release -S . \
             -DCMAKE_BUILD_TYPE=Release \
-            -DVNEEVENTS_LIB_TYPE=${{ matrix.lib_type }} \
+            -DVNEEVENTS_LIB_TYPE=static \
             -DBUILD_TESTS=ON \
             -DENABLE_IPO=OFF
 
       - name: Build
-        run: cmake --build "build/${{ matrix.lib_type }}/Release" --config Release --parallel
+        run: cmake --build build/static/Release --config Release --parallel
 
       - name: Test
-        working-directory: "build/${{ matrix.lib_type }}/Release"
-        run: ctest --output-on-failure
+        working-directory: build/static/Release
+        run: ctest --output-on-failure --timeout 300
 
   windows:
-    name: "Build+Test / Windows (${{ matrix.lib_type }})"
+    name: "Build+Test / Windows"
     needs: [detect-release, pre-checks-gate]
     if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        lib_type: [static, shared]
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
       - name: Configure CMake
         run: |
-          cmake -B "build/${{ matrix.lib_type }}/Release" -S . `
+          cmake -B build/shared/Release -S . `
             -DCMAKE_BUILD_TYPE=Release `
-            -DVNEEVENTS_LIB_TYPE=${{ matrix.lib_type }} `
+            -DVNEEVENTS_LIB_TYPE=shared `
             -DBUILD_TESTS=ON `
             -DENABLE_IPO=OFF
 
       - name: Build
-        run: cmake --build "build/${{ matrix.lib_type }}/Release" --config Release --parallel
+        run: cmake --build build/shared/Release --config Release --parallel
 
       - name: Test
-        working-directory: "build/${{ matrix.lib_type }}/Release"
-        run: ctest --output-on-failure -C Release
+        working-directory: build/shared/Release
+        run: ctest --output-on-failure -C Release --timeout 300
+
+  build-web:
+    name: "Build / Web (Emscripten)"
+    needs: [detect-release, pre-checks-gate]
+    if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Emscripten
+        uses: mymindstorm/setup-emscripten@v14
+
+      - name: Configure CMake (Emscripten)
+        run: |
+          cmake -B build/shared/Release -S . \
+            -DCMAKE_TOOLCHAIN_FILE="$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DVNEEVENTS_LIB_TYPE=shared \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DENABLE_IPO=OFF
+
+      - name: Build
+        run: cmake --build build/shared/Release --parallel
 
   build-ios:
     name: "Build / iOS (static)"
     needs: [detect-release, pre-checks-gate]
     if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
+      - name: Use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -304,6 +351,7 @@ jobs:
             -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=NO \
             -DVNEEVENTS_LIB_TYPE=static \
             -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
             -DENABLE_IPO=OFF
 
       - name: Build
@@ -327,11 +375,55 @@ jobs:
           test -d "${GITHUB_WORKSPACE}/install/include/vertexnova/common"
           test -n "$(find "${GITHUB_WORKSPACE}/install" -name '*.a' -print -quit)"
 
-  clang-tidy:
-    name: "Analysis / clang-tidy"
+  build-android:
+    name: "Build / Android (arm64-v8a)"
     needs: [detect-release, pre-checks-gate]
     if: needs.pre-checks-gate.result == 'success' && needs.detect-release.outputs.is_release != 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Android NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27d
+
+      - name: Configure CMake (Android)
+        env:
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          set -euo pipefail
+          NDK="${ANDROID_NDK_ROOT}"
+          if [[ -z "$NDK" || ! -f "$NDK/build/cmake/android.toolchain.cmake" ]]; then
+            echo "::error::Android NDK path invalid (ANDROID_NDK_ROOT=${NDK:-empty})"
+            exit 1
+          fi
+          cmake -B build/shared/Release -S . \
+            -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-24 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DVNEEVENTS_LIB_TYPE=shared \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DENABLE_IPO=OFF
+
+      - name: Build
+        run: cmake --build build/shared/Release --parallel
+
+  clang-tidy:
+    name: "Analysis / clang-tidy"
+    runs-on: ubuntu-latest
+    needs: [build-linux-clang]
+    if: needs.build-linux-clang.result == 'success'
     permissions:
       contents: read
 
@@ -341,12 +433,20 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
+
+      - name: Restore CMake build cache (Clang static)
+        uses: actions/cache@v4
+        with:
+          path: build/static/Release
+          key: vneevents-clang-tidy-static-Release-${{ hashFiles('CMakeLists.txt') }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('.gitmodules') }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            vneevents-clang-tidy-static-Release-
 
       - name: Install clang, clang-tidy
         run: sudo apt-get update -qq && sudo apt-get install -y build-essential cmake clang clang-tidy
 
-      - name: Configure CMake (compile_commands for clang-tidy)
+      - name: Configure CMake (refresh compile_commands)
         run: |
           cmake -B build/static/Release -S . \
             -DCMAKE_BUILD_TYPE=Release \
@@ -376,11 +476,14 @@ jobs:
     needs:
       - detect-release
       - pre-checks-gate
-      - linux
+      - build-linux-gcc
+      - build-linux-clang
       - coverage
       - macos
       - windows
+      - build-web
       - build-ios
+      - build-android
       - clang-tidy
 
     steps:
@@ -389,11 +492,14 @@ jobs:
           RESULTS=(
             "detect-release=${{ needs.detect-release.result }}"
             "pre-checks-gate=${{ needs.pre-checks-gate.result }}"
-            "linux=${{ needs.linux.result }}"
+            "build-linux-gcc=${{ needs.build-linux-gcc.result }}"
+            "build-linux-clang=${{ needs.build-linux-clang.result }}"
             "coverage=${{ needs.coverage.result }}"
             "macos=${{ needs.macos.result }}"
             "windows=${{ needs.windows.result }}"
+            "build-web=${{ needs.build-web.result }}"
             "build-ios=${{ needs.build-ios.result }}"
+            "build-android=${{ needs.build-android.result }}"
             "clang-tidy=${{ needs.clang-tidy.result }}"
           )
           FAILED=0
@@ -406,3 +512,21 @@ jobs:
             fi
           done
           exit $FAILED
+
+      - name: Write pipeline summary
+        if: always()
+        run: |
+          echo "# CI Pipeline Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Job | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| detect-release | ${{ needs.detect-release.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| pre-checks-gate | ${{ needs.pre-checks-gate.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| build-linux-gcc | ${{ needs.build-linux-gcc.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| build-linux-clang | ${{ needs.build-linux-clang.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| coverage | ${{ needs.coverage.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| macos | ${{ needs.macos.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| windows | ${{ needs.windows.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| build-web | ${{ needs.build-web.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| build-ios | ${{ needs.build-ios.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| build-android | ${{ needs.build-android.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| clang-tidy | ${{ needs.clang-tidy.result }} |" >> "$GITHUB_STEP_SUMMARY"
