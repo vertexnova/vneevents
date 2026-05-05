@@ -67,7 +67,7 @@ class VNEEVENTS_API WindowResizeEvent : public Event {
  * @class WindowFocusEvent
  * @brief Event generated when a window gains or loses focus.
  */
-class WindowFocusEvent : public Event {
+class VNEEVENTS_API WindowFocusEvent : public Event {
    public:
     explicit WindowFocusEvent(bool focused)
         : Event(EventType::eWindowFocus)

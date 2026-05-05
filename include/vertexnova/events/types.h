@@ -57,8 +57,8 @@ enum class EventType : uint8_t {
     eTouchPress = 11,
     eTouchRelease = 12,
     eTouchMove = 13,
-    eMouseButtonDoubleClicked = 14,  // appended to preserve existing numeric IDs
-    eWindowFocus = 15
+    eMouseButtonDoubleClicked = 14,
+    eWindowFocus = 15  // appended to preserve existing numeric IDs
 };
 
 /**
