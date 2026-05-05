@@ -77,7 +77,7 @@ class WindowFocusEvent : public Event {
 
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eWindow; }
 
-    [[nodiscard]] std::string name() const override { return focused_ ? "WindowFocusGained" : "WindowFocusLost"; }
+    [[nodiscard]] std::string name() const override { return "WindowFocus"; }
 
     [[nodiscard]] std::string toString() const override {
         return focused_ ? "WindowFocusEvent: gained" : "WindowFocusEvent: lost";
