@@ -60,6 +60,11 @@ class GlfwEventLogger : public vne::events::EventListener {
                 VNE_LOG_INFO << "  [Event] Window resized: " << e.width() << "x" << e.height();
                 break;
             }
+            case EventType::eWindowFocus: {
+                const auto& e = static_cast<const vne::events::WindowFocusEvent&>(event);
+                VNE_LOG_INFO << "  [Event] Window focus: " << (e.focused() ? "gained" : "lost");
+                break;
+            }
             case EventType::eKeyPressed: {
                 const auto& e = static_cast<const vne::events::KeyPressedEvent&>(event);
                 VNE_LOG_INFO << "  [Event] Key pressed: " << static_cast<int>(e.keyCode())
@@ -148,7 +153,7 @@ void GlfwIntegrationDemo::run() {
         return;
     }
 
-    VNE_LOG_INFO << "  Window open. Keys (W,A,S,D,Space), mouse, resize; ESC or close to exit.";
+    VNE_LOG_INFO << "  Window open. Keys (W,A,S,D,Space), mouse, resize, focus; ESC or close to exit.";
     VNE_LOG_INFO
         << "  Touch: LMB mimics touch (id=0). Hold Shift/Ctrl/Alt/Super and use mouse or keys to test modifiers.";
     VNE_LOG_INFO << "";
@@ -159,6 +164,7 @@ void GlfwIntegrationDemo::run() {
     using ET = vne::events::EventType;
     manager.registerListener(ET::eWindowClose, logger);
     manager.registerListener(ET::eWindowResize, logger);
+    manager.registerListener(ET::eWindowFocus, logger);
     manager.registerListener(ET::eKeyPressed, logger);
     manager.registerListener(ET::eKeyReleased, logger);
     manager.registerListener(ET::eMouseMoved, logger);

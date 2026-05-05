@@ -106,6 +106,7 @@ Input::nextFrame();  // call once per frame
 | `MouseScrolledEvent` | `eMouseScrolled` | Mouse, Input |
 | `WindowCloseEvent` | `eWindowClose` | Window |
 | `WindowResizeEvent` | `eWindowResize` | Window |
+| `WindowFocusEvent` | `eWindowFocus` | Window |
 | `TouchPressEvent` | `eTouchPress` | TouchScreen, Input |
 | `TouchReleaseEvent` | `eTouchRelease` | TouchScreen, Input |
 | `TouchMoveEvent` | `eTouchMove` | TouchScreen, Input |
