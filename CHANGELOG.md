@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/vertexnova/vneevents/compare/v1.1.2...v1.2.0) (2026-05-05)
+
+
+### Features
+
+* Add WindowFocusEvent class and update EventType enumeration ([#10](https://github.com/vertexnova/vneevents/issues/10)) ([5af4ec2](https://github.com/vertexnova/vneevents/commit/5af4ec2a51eab17a95c9a199642c3595267f907c))
+
 ## [1.1.2](https://github.com/vertexnova/vneevents/compare/v1.1.1...v1.1.2) (2026-05-03)
 
 
