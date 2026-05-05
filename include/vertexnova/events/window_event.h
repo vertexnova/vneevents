@@ -63,4 +63,28 @@ class VNEEVENTS_API WindowResizeEvent : public Event {
     uint32_t height_;
 };
 
+/**
+ * @class WindowFocusEvent
+ * @brief Event generated when a window gains or loses focus.
+ */
+class WindowFocusEvent : public Event {
+   public:
+    explicit WindowFocusEvent(bool focused)
+        : Event(EventType::eWindowFocus)
+        , focused_(focused) {}
+
+    [[nodiscard]] bool focused() const noexcept { return focused_; }
+
+    [[nodiscard]] int categoryFlags() const override { return EventCategory::eWindow; }
+
+    [[nodiscard]] std::string name() const override { return focused_ ? "WindowFocusGained" : "WindowFocusLost"; }
+
+    [[nodiscard]] std::string toString() const override {
+        return focused_ ? "WindowFocusEvent: gained" : "WindowFocusEvent: lost";
+    }
+
+   private:
+    bool focused_;
+};
+
 }  // namespace vne::events
