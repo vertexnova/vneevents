@@ -112,6 +112,7 @@ bool GLFWIntegration::initialize(int width, int height, const char* title) {
     glfwSetCursorPosCallback(window_, mouseMoveCallback);
     glfwSetWindowSizeCallback(window_, windowResizeCallback);
     glfwSetWindowCloseCallback(window_, windowCloseCallback);
+    glfwSetWindowFocusCallback(window_, windowFocusCallback);
 
     return true;
 }
@@ -175,6 +176,13 @@ void GLFWIntegration::windowCloseCallback(GLFWwindow* w) {
     auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
     if (i != nullptr) {
         i->handleWindowClose();
+    }
+}
+
+void GLFWIntegration::windowFocusCallback(GLFWwindow* w, int focused) {
+    auto* i = reinterpret_cast<GLFWIntegration*>(glfwGetWindowUserPointer(w));
+    if (i != nullptr) {
+        i->handleWindowFocus(focused == GLFW_TRUE);
     }
 }
 
@@ -256,6 +264,10 @@ void GLFWIntegration::handleWindowResize(int width, int height) {
 
 void GLFWIntegration::handleWindowClose() {
     event_manager_.pushEvent(std::make_unique<vne::events::WindowCloseEvent>());
+}
+
+void GLFWIntegration::handleWindowFocus(bool focused) {
+    event_manager_.pushEvent(std::make_unique<vne::events::WindowFocusEvent>(focused));
 }
 
 vne::events::KeyCode GLFWIntegration::glfwKeyToKeyCode(int glfw_key) {

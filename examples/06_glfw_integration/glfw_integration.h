@@ -42,6 +42,7 @@ class GLFWIntegration {
     void handleMouseButton(GLFWwindow* window, int button, int action, int mods);
     void handleWindowResize(int width, int height);
     void handleWindowClose();
+    void handleWindowFocus(bool focused);
 
    private:
     static vne::events::KeyCode glfwKeyToKeyCode(int glfw_key);
@@ -51,6 +52,7 @@ class GLFWIntegration {
     static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
     static void windowResizeCallback(GLFWwindow* window, int width, int height);
     static void windowCloseCallback(GLFWwindow* window);
+    static void windowFocusCallback(GLFWwindow* window, int focused);
 
     static constexpr double kDoubleClickMaxIntervalSeconds_ = 0.3;  // 300 ms
     static constexpr double kDoubleClickMaxDistancePixels_ = 4.0;   // small movement

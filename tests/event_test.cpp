@@ -195,6 +195,28 @@ TEST(WindowEventTest, WindowResize) {
     EXPECT_EQ(event.height(), 1080u);
 }
 
+TEST(WindowEventTest, WindowFocusGained) {
+    WindowFocusEvent event(true);
+
+    EXPECT_EQ(event.type(), EventType::eWindowFocus);
+    EXPECT_TRUE(event.focused());
+    EXPECT_TRUE(event.isInCategory(EventCategory::eWindow));
+    EXPECT_FALSE(event.isInCategory(EventCategory::eInput));
+    EXPECT_EQ(event.name(), "WindowFocus");
+    EXPECT_EQ(event.toString(), "WindowFocusEvent: gained");
+}
+
+TEST(WindowEventTest, WindowFocusLost) {
+    WindowFocusEvent event(false);
+
+    EXPECT_EQ(event.type(), EventType::eWindowFocus);
+    EXPECT_FALSE(event.focused());
+    EXPECT_TRUE(event.isInCategory(EventCategory::eWindow));
+    EXPECT_FALSE(event.isInCategory(EventCategory::eInput));
+    EXPECT_EQ(event.name(), "WindowFocus");
+    EXPECT_EQ(event.toString(), "WindowFocusEvent: lost");
+}
+
 // ============================================================================
 // Touch Event Tests
 // ============================================================================

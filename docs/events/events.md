@@ -81,6 +81,28 @@ Common event types include:
 - `eMouseButtonPressed`, `eMouseButtonReleased`, `eMouseButtonDoubleClicked`, `eMouseMoved`, `eMouseScrolled`
 - `eTouchPress`, `eTouchMove`, `eTouchRelease`
 
+#### Event classes and `EventType`
+
+| Event class | EventType | Category |
+|-------------|-----------|----------|
+| `KeyPressedEvent` | `eKeyPressed` | Keyboard, Input |
+| `KeyReleasedEvent` | `eKeyReleased` | Keyboard, Input |
+| `KeyRepeatEvent` | `eKeyRepeat` | Keyboard, Input |
+| `KeyTypedEvent` | `eKeyTyped` | Keyboard, Input |
+| `MouseButtonPressedEvent` | `eMouseButtonPressed` | MouseButton, Input |
+| `MouseButtonReleasedEvent` | `eMouseButtonReleased` | MouseButton, Input |
+| `MouseButtonDoubleClickedEvent` | `eMouseButtonDoubleClicked` | MouseButton, Input |
+| `MouseMovedEvent` | `eMouseMoved` | Mouse, Input |
+| `MouseScrolledEvent` | `eMouseScrolled` | Mouse, Input |
+| `WindowCloseEvent` | `eWindowClose` | Window |
+| `WindowResizeEvent` | `eWindowResize` | Window |
+| `WindowFocusEvent` | `eWindowFocus` | Window |
+| `TouchPressEvent` | `eTouchPress` | TouchScreen, Input |
+| `TouchReleaseEvent` | `eTouchRelease` | TouchScreen, Input |
+| `TouchMoveEvent` | `eTouchMove` | TouchScreen, Input |
+
+For `WindowFocusEvent`, use `focused()` (or `toString()`) to distinguish focus gained vs lost; `name()` is `"WindowFocus"` for both.
+
 ## Usage Examples
 
 ### Basic Event Handling
