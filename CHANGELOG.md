@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/vertexnova/vneevents/compare/v1.2.1...v1.2.2) (2026-05-22)
+
+
+### Bug Fixes
+
+* update vnelogging submodule to latest commit ([#14](https://github.com/vertexnova/vneevents/issues/14)) ([6e877a2](https://github.com/vertexnova/vneevents/commit/6e877a22f0cb08c25bafc356bdc54f554f2edc97))
+
 ## [1.2.1](https://github.com/vertexnova/vneevents/compare/v1.2.0...v1.2.1) (2026-05-17)
 
 
