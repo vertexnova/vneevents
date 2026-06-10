@@ -39,56 +39,49 @@ class VNEEVENTS_API EventManager {
      *
      * @threadsafe This function is thread-safe.
      */
-    static EventManager& instance() {
-        static EventManager instance;
-        return instance;
-    }
+    static EventManager& instance();
 
     /**
      * @brief Registers a listener for a specific event type.
      * @param event_type The event type to listen for.
      * @param listener The listener to register.
      */
-    void registerListener(EventType event_type, ListenerPtr listener) {
-        event_bus_.registerListener(event_type, std::move(listener));
-    }
+    void registerListener(EventType event_type, ListenerPtr listener);
 
     /**
      * @brief Unregisters a listener for a specific event type.
      * @param event_type The event type to unregister from.
      * @param listener The listener to unregister.
      */
-    void unregisterListener(EventType event_type, const EventListener* listener) {
-        event_bus_.unregisterListener(event_type, listener);
-    }
+    void unregisterListener(EventType event_type, const EventListener* listener);
 
     /**
      * @brief Pushes an event onto the internal event queue.
      * @param event The event to push.
      */
-    void pushEvent(std::unique_ptr<Event> event) { event_queue_.push(std::move(event)); }
+    void pushEvent(std::unique_ptr<Event> event);
 
     /**
      * @brief Processes all events in the internal event queue.
      */
-    void processEvents() { event_bus_.processEvents(event_queue_); }
+    void processEvents();
 
     /**
      * @brief Dispatches a single event immediately (bypasses queue).
      * @param event The event to dispatch.
      */
-    void dispatchImmediate(const Event& event) { event_bus_.dispatchImmediate(event); }
+    void dispatchImmediate(const Event& event);
 
     /**
      * @brief Gets the number of pending events in the queue.
      * @return The number of pending events.
      */
-    [[nodiscard]] size_t pendingEventCount() const { return event_queue_.size(); }
+    [[nodiscard]] size_t pendingEventCount() const;
 
     /**
      * @brief Clears all pending events from the queue.
      */
-    void clearPendingEvents() { event_queue_.clear(); }
+    void clearPendingEvents();
 
    private:
     EventManager() = default;
