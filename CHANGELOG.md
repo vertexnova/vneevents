@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/vertexnova/vneevents/compare/v1.2.2...v1.3.0) (2026-06-10)
+
+
+### Features
+
+* Implement EventManager class with event handling capabilities ([#16](https://github.com/vertexnova/vneevents/issues/16)) ([e6e1cfb](https://github.com/vertexnova/vneevents/commit/e6e1cfb116fa10f0e7ca69d08fc711ed0b31bfe3))
+
 ## [1.2.2](https://github.com/vertexnova/vneevents/compare/v1.2.1...v1.2.2) (2026-05-22)
 
 
