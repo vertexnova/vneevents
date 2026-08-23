@@ -1,3 +1,29 @@
+#==============================================================================
+# Copyright (c) 2026 Ajeet Singh Yadav. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License")
+#
+# Author:    Ajeet Singh Yadav
+# Created:   January 2026
+#
+# Autodoc:   yes
+#==============================================================================
+#
+# VneEventsConfig.cmake (generated from VneEventsConfig.cmake.in at install time)
+#
+# Preferred way for consumers to use an installed VneEvents package:
+#
+#   find_package(VneEvents CONFIG REQUIRED)
+#   target_link_libraries(my_app PRIVATE vne::events)
+#
+# What this file does:
+#   1. @PACKAGE_INIT@ expands to relocatable-path helpers for the install tree.
+#   2. VneEventsTargets.cmake defines imported targets (vne::events, etc.).
+#   3. check_required_components() validates optional component requests.
+#
+# When CONFIG mode is unavailable, consumers can fall back to MODULE mode:
+#   find_package(VneEvents REQUIRED)   # uses FindVneEvents.cmake on CMAKE_MODULE_PATH
+#==============================================================================
+
 @PACKAGE_INIT@
 
 include("${CMAKE_CURRENT_LIST_DIR}/VneEventsTargets.cmake")
