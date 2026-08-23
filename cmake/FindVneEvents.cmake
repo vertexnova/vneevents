@@ -96,7 +96,7 @@ endfunction()
 # Step 2 helpers — Windows shared vs static (import lib + DLL pairing)
 #------------------------------------------------------------------------------
 
-function(_vneevents_windows_classify_library lib_path out_is_shared out_runtime_dll)
+function(_vneevents_windows_classify_library lib_path user_is_shared_hint out_is_shared out_runtime_dll)
     set(_is_shared FALSE)
     set(_runtime_dll "")
 
@@ -117,11 +117,11 @@ function(_vneevents_windows_classify_library lib_path out_is_shared out_runtime_
 
     set(_force_shared FALSE)
     set(_force_static FALSE)
-    if(NOT VneEvents_IS_SHARED STREQUAL "")
-        string(TOUPPER "${VneEvents_IS_SHARED}" _is_shared_upper)
+    if(NOT user_is_shared_hint STREQUAL "")
+        string(TOUPPER "${user_is_shared_hint}" _is_shared_upper)
         if(_is_shared_upper MATCHES "^(0|OFF|FALSE|NO|N)$")
             set(_force_static TRUE)
-        elseif(VneEvents_IS_SHARED)
+        elseif(user_is_shared_hint)
             set(_force_shared TRUE)
         endif()
     endif()
@@ -211,12 +211,12 @@ function(_vneevents_unix_classify_library lib_path out_is_shared)
     set(${out_is_shared} "${_is_shared}" PARENT_SCOPE)
 endfunction()
 
-function(_vneevents_detect_shared lib_path out_is_shared out_runtime_dll)
+function(_vneevents_detect_shared lib_path user_is_shared_hint out_is_shared out_runtime_dll)
     set(_is_shared FALSE)
     set(_runtime_dll "")
 
     if(WIN32)
-        _vneevents_windows_classify_library("${lib_path}" _is_shared _runtime_dll)
+        _vneevents_windows_classify_library("${lib_path}" "${user_is_shared_hint}" _is_shared _runtime_dll)
     else()
         _vneevents_unix_classify_library("${lib_path}" _is_shared)
     endif()
@@ -289,13 +289,26 @@ set(VneEvents_RUNTIME_LIBRARY "${VneEvents_RUNTIME_LIBRARY}" CACHE FILEPATH
     "Optional (Windows): full path to vneevents.dll if FindVneEvents cannot find it."
 )
 
-set(VneEvents_IS_SHARED FALSE)
+# Preserve consumer hint; do not assign VneEvents_IS_SHARED until detection finishes.
+set(_VneEvents_user_is_shared_hint "")
+if(NOT VneEvents_IS_SHARED STREQUAL "")
+    set(_VneEvents_user_is_shared_hint "${VneEvents_IS_SHARED}")
+endif()
+
+set(_VneEvents_detected_is_shared FALSE)
+set(_VneEvents_runtime_dll "")
 if(VneEvents_LIBRARY)
-    _vneevents_detect_shared("${VneEvents_LIBRARY}" VneEvents_IS_SHARED _VneEvents_runtime_dll)
+    _vneevents_detect_shared(
+        "${VneEvents_LIBRARY}"
+        "${_VneEvents_user_is_shared_hint}"
+        _VneEvents_detected_is_shared
+        _VneEvents_runtime_dll
+    )
     if(_VneEvents_runtime_dll)
         set(VneEvents_RUNTIME_LIBRARY "${_VneEvents_runtime_dll}")
     endif()
 endif()
+set(VneEvents_IS_SHARED ${_VneEvents_detected_is_shared})
 
 # Step 3: standard find_package result + imported target
 find_package_handle_standard_args(VneEvents
@@ -320,3 +333,5 @@ unset(_VneEvents_prefix)
 unset(_VneEvents_include_paths)
 unset(_VneEvents_library_paths)
 unset(_VneEvents_runtime_dll)
+unset(_VneEvents_user_is_shared_hint)
+unset(_VneEvents_detected_is_shared)

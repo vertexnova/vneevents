@@ -18,9 +18,11 @@
 # What this file does:
 #   1. @PACKAGE_INIT@ expands to relocatable-path helpers for the install tree.
 #   2. VneEventsTargets.cmake defines imported targets (vne::events, etc.).
-#   3. check_required_components() validates optional component requests.
+#   3. check_required_components(VneEvents) checks requested non-optional components
+#      and sets VneEvents_FOUND to FALSE when a required component is missing.
 #
 # When CONFIG mode is unavailable, consumers can fall back to MODULE mode:
+#   list(APPEND CMAKE_MODULE_PATH "<prefix>/<CMAKE_INSTALL_LIBDIR>/cmake/VneEvents")
 #   find_package(VneEvents REQUIRED)   # uses FindVneEvents.cmake on CMAKE_MODULE_PATH
 #==============================================================================
 
