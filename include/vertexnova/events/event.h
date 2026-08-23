@@ -41,6 +41,13 @@ class VNEEVENTS_API Event {
     /// Get the event type
     [[nodiscard]] EventType type() const noexcept { return type_; }
 
+    /**
+     * @brief Identifier of the window this event originated from.
+     * @return The producer-assigned window id, or kInvalidWindowId when the event has no window scope
+     *         (application lifecycle events, synthetic events, producers that do not stamp an id).
+     */
+    [[nodiscard]] WindowId windowId() const noexcept { return window_id_; }
+
     /// Get the timestamp of when the event occurred
     [[nodiscard]] TimeStamp timestamp() const noexcept { return timestamp_; }
 
@@ -54,10 +61,23 @@ class VNEEVENTS_API Event {
     [[nodiscard]] bool isInCategory(EventCategory category) const noexcept { return (categoryFlags() & category) != 0; }
 
    protected:
-    explicit Event(EventType event_type) noexcept
+    explicit Event(EventType event_type, WindowId window_id = kInvalidWindowId) noexcept
         : type_(event_type)
         , timestamp_(std::chrono::system_clock::now())
+        , window_id_(window_id)
         , handled_(false) {}
+
+    /**
+     * @brief Suffix for toString() implementations: " [window N]", or empty when no id is set.
+     *
+     * Keeps debug output byte-identical to pre-WindowId releases for events that carry no id.
+     */
+    [[nodiscard]] std::string windowSuffix() const {
+        if (window_id_ == kInvalidWindowId) {
+            return {};
+        }
+        return " [window " + std::to_string(window_id_) + "]";
+    }
 
     Event(const Event&) = delete;
     Event& operator=(const Event&) = delete;
@@ -65,6 +85,7 @@ class VNEEVENTS_API Event {
    private:
     EventType type_;
     TimeStamp timestamp_;
+    WindowId window_id_;
     bool handled_;
 };
 

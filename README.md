@@ -98,18 +98,35 @@ Input::nextFrame();  // call once per frame
 | `KeyPressedEvent` | `eKeyPressed` | Keyboard, Input |
 | `KeyReleasedEvent` | `eKeyReleased` | Keyboard, Input |
 | `KeyRepeatEvent` | `eKeyRepeat` | Keyboard, Input |
-| `KeyTypedEvent` | `eKeyTyped` | Keyboard, Input |
 | `MouseButtonPressedEvent` | `eMouseButtonPressed` | MouseButton, Input |
 | `MouseButtonReleasedEvent` | `eMouseButtonReleased` | MouseButton, Input |
 | `MouseButtonDoubleClickedEvent` | `eMouseButtonDoubleClicked` | MouseButton, Input |
 | `MouseMovedEvent` | `eMouseMoved` | Mouse, Input |
 | `MouseScrolledEvent` | `eMouseScrolled` | Mouse, Input |
+| `TextInputEvent` | `eTextInput` | Keyboard, Input |
 | `WindowCloseEvent` | `eWindowClose` | Window |
 | `WindowResizeEvent` | `eWindowResize` | Window |
 | `WindowFocusEvent` | `eWindowFocus` | Window |
+| `WindowMinimizeEvent` | `eWindowMinimize` | Window |
+| `WindowRestoreEvent` | `eWindowRestore` | Window |
+| `WindowMoveEvent` | `eWindowMove` | Window |
+| `WindowDpiChangedEvent` | `eWindowDpiChanged` | Window |
+| `WindowSafeAreaChangedEvent` | `eWindowSafeAreaChanged` | Window |
 | `TouchPressEvent` | `eTouchPress` | TouchScreen, Input |
 | `TouchReleaseEvent` | `eTouchRelease` | TouchScreen, Input |
 | `TouchMoveEvent` | `eTouchMove` | TouchScreen, Input |
+| `ApplicationPauseEvent` | `eApplicationPause` | Application |
+| `ApplicationResumeEvent` | `eApplicationResume` | Application |
+| `ApplicationLowMemoryEvent` | `eApplicationLowMemory` | Application |
+
+Every event carries a `WindowId` identifying which window it came from — `event.windowId()`, or
+`kInvalidWindowId` when the producer manages a single window or the event has no window scope.
+Application lifecycle events (`ApplicationPauseEvent` and friends) are process-scoped and always carry
+`kInvalidWindowId`.
+
+`TextInputEvent` carries the committed UTF-8 text from the platform character/IME path and is what
+a text field should consume; `KeyPressedEvent` identifies a physical key and is not a substitute.
+Producers holding a code point rather than a string can use `utf8FromCodePoint()`.
 
 ## Building
 

@@ -10,18 +10,22 @@ The Event System follows a layered architecture with clear separation of concern
 
 ```
 Event System
-├── Event              # Base event class
-├── Event Types        # Specific event implementations
-│   ├── WindowEvent    # Window-related events
-│   ├── KeyEvent       # Keyboard events
-│   ├── MouseEvent     # Mouse events
-│   └── TouchEvent     # Touch events
-├── Event Management   # Event handling infrastructure
-│   ├── EventBus       # Central event routing
-│   ├── EventDispatcher # Event distribution
-│   ├── EventQueue     # Thread-safe queuing
-│   └── EventManager   # High-level event management
-└── Event Listeners    # Event subscription system
+├── Event                  # Base event class (carries WindowId, type, categories)
+├── Event Types            # Specific event implementations
+│   ├── KeyEvent           # Physical keyboard: press, release, repeat
+│   ├── TextInputEvent     # Committed UTF-8 text / IME (extends Event directly)
+│   ├── MouseButtonEvent   # Mouse button press, release, double-click
+│   ├── MouseMovedEvent    # Cursor motion (extends Event directly)
+│   ├── MouseScrolledEvent # Scroll wheel (extends Event directly)
+│   ├── WindowEvent        # Window lifecycle and state
+│   ├── TouchEvent         # Touch press, move, release
+│   └── ApplicationEvent   # Process-scoped lifecycle (pause, resume, low memory)
+├── Event Management       # Event handling infrastructure
+│   ├── EventBus           # Central event routing
+│   ├── EventDispatcher    # Event distribution
+│   ├── EventQueue         # Thread-safe queuing
+│   └── EventManager       # High-level event management
+└── Event Listeners        # Event subscription system
 ```
 
 ### Key Design Principles
@@ -47,10 +51,12 @@ The foundation of the event system, providing a common interface for all events.
 
 ### Event Types
 
-- **Window Events**: Window resize, close, focus, etc.
-- **Key Events**: Key press, release, repeat
-- **Mouse Events**: Mouse move, button press/release, scroll
-- **Touch Events**: Touch press, move, release
+- **Keyboard (physical)**: `KeyPressedEvent`, `KeyReleasedEvent`, `KeyRepeatEvent`
+- **Text input**: `TextInputEvent` — committed UTF-8 from the platform character/IME path
+- **Mouse**: `MouseButtonPressedEvent`, `MouseButtonReleasedEvent`, `MouseButtonDoubleClickedEvent`, `MouseMovedEvent`, `MouseScrolledEvent`
+- **Window**: `WindowCloseEvent`, `WindowResizeEvent`, `WindowFocusEvent`, `WindowMinimizeEvent`, `WindowRestoreEvent`, `WindowMoveEvent`, `WindowDpiChangedEvent`, `WindowSafeAreaChangedEvent`
+- **Touch**: `TouchPressEvent`, `TouchMoveEvent`, `TouchReleaseEvent`
+- **Application lifecycle**: `ApplicationPauseEvent`, `ApplicationResumeEvent`, `ApplicationLowMemoryEvent`
 
 ### Event Management
 
@@ -74,34 +80,54 @@ Events can belong to multiple categories for efficient filtering:
 
 ### Event Types
 
-Common event types include:
+All `EventType` values and their concrete classes:
 
-- `eWindowClose`, `eWindowResize`, `eWindowFocus`
-- `eKeyPressed`, `eKeyReleased`, `eKeyTyped`
-- `eMouseButtonPressed`, `eMouseButtonReleased`, `eMouseButtonDoubleClicked`, `eMouseMoved`, `eMouseScrolled`
-- `eTouchPress`, `eTouchMove`, `eTouchRelease`
+- **Window**: `eWindowClose`, `eWindowResize`, `eWindowFocus`, `eWindowMinimize`, `eWindowRestore`, `eWindowMove`, `eWindowDpiChanged`, `eWindowSafeAreaChanged`
+- **Keyboard**: `eKeyPressed`, `eKeyReleased`, `eKeyRepeat`, `eTextInput`
+- **Mouse**: `eMouseButtonPressed`, `eMouseButtonReleased`, `eMouseButtonDoubleClicked`, `eMouseMoved`, `eMouseScrolled`
+- **Touch**: `eTouchPress`, `eTouchMove`, `eTouchRelease`
+- **Application**: `eApplicationPause`, `eApplicationResume`, `eApplicationLowMemory`
+
+Slot 6 in `EventType` is reserved (formerly `eKeyTyped`, removed in favour of `eTextInput`).
 
 #### Event classes and `EventType`
 
-| Event class | EventType | Category |
-|-------------|-----------|----------|
-| `KeyPressedEvent` | `eKeyPressed` | Keyboard, Input |
-| `KeyReleasedEvent` | `eKeyReleased` | Keyboard, Input |
-| `KeyRepeatEvent` | `eKeyRepeat` | Keyboard, Input |
-| `KeyTypedEvent` | `eKeyTyped` | Keyboard, Input |
-| `MouseButtonPressedEvent` | `eMouseButtonPressed` | MouseButton, Input |
-| `MouseButtonReleasedEvent` | `eMouseButtonReleased` | MouseButton, Input |
-| `MouseButtonDoubleClickedEvent` | `eMouseButtonDoubleClicked` | MouseButton, Input |
-| `MouseMovedEvent` | `eMouseMoved` | Mouse, Input |
-| `MouseScrolledEvent` | `eMouseScrolled` | Mouse, Input |
-| `WindowCloseEvent` | `eWindowClose` | Window |
-| `WindowResizeEvent` | `eWindowResize` | Window |
-| `WindowFocusEvent` | `eWindowFocus` | Window |
-| `TouchPressEvent` | `eTouchPress` | TouchScreen, Input |
-| `TouchReleaseEvent` | `eTouchRelease` | TouchScreen, Input |
-| `TouchMoveEvent` | `eTouchMove` | TouchScreen, Input |
+| Event class | Base class | EventType | Category |
+|-------------|------------|-----------|----------|
+| `ApplicationLowMemoryEvent` | `ApplicationEvent` | `eApplicationLowMemory` | Application |
+| `ApplicationPauseEvent` | `ApplicationEvent` | `eApplicationPause` | Application |
+| `ApplicationResumeEvent` | `ApplicationEvent` | `eApplicationResume` | Application |
+| `KeyPressedEvent` | `KeyEvent` | `eKeyPressed` | Keyboard, Input |
+| `KeyReleasedEvent` | `KeyEvent` | `eKeyReleased` | Keyboard, Input |
+| `KeyRepeatEvent` | `KeyEvent` | `eKeyRepeat` | Keyboard, Input |
+| `MouseButtonDoubleClickedEvent` | `MouseButtonEvent` | `eMouseButtonDoubleClicked` | MouseButton, Input |
+| `MouseButtonPressedEvent` | `MouseButtonEvent` | `eMouseButtonPressed` | MouseButton, Input |
+| `MouseButtonReleasedEvent` | `MouseButtonEvent` | `eMouseButtonReleased` | MouseButton, Input |
+| `MouseMovedEvent` | `Event` | `eMouseMoved` | Mouse, Input |
+| `MouseScrolledEvent` | `Event` | `eMouseScrolled` | Mouse, Input |
+| `TextInputEvent` | `Event` | `eTextInput` | Keyboard, Input |
+| `TouchMoveEvent` | `TouchEvent` | `eTouchMove` | TouchScreen, Input |
+| `TouchPressEvent` | `TouchEvent` | `eTouchPress` | TouchScreen, Input |
+| `TouchReleaseEvent` | `TouchEvent` | `eTouchRelease` | TouchScreen, Input |
+| `WindowCloseEvent` | `WindowEvent` | `eWindowClose` | Window |
+| `WindowDpiChangedEvent` | `WindowEvent` | `eWindowDpiChanged` | Window |
+| `WindowFocusEvent` | `WindowEvent` | `eWindowFocus` | Window |
+| `WindowMinimizeEvent` | `WindowEvent` | `eWindowMinimize` | Window |
+| `WindowMoveEvent` | `WindowEvent` | `eWindowMove` | Window |
+| `WindowResizeEvent` | `WindowEvent` | `eWindowResize` | Window |
+| `WindowRestoreEvent` | `WindowEvent` | `eWindowRestore` | Window |
+| `WindowSafeAreaChangedEvent` | `WindowEvent` | `eWindowSafeAreaChanged` | Window |
 
 For `WindowFocusEvent`, use `focused()` (or `toString()`) to distinguish focus gained vs lost; `name()` is `"WindowFocus"` for both.
+
+Every event carries a `WindowId` identifying which window it came from — `event.windowId()`, or
+`kInvalidWindowId` when the producer manages a single window or the event has no window scope.
+Application lifecycle events (`ApplicationPauseEvent` and friends) are process-scoped and always carry
+`kInvalidWindowId`.
+
+`TextInputEvent` carries the committed UTF-8 text from the platform character/IME path and is what
+a text field should consume; `KeyPressedEvent` identifies a physical key and is not a substitute.
+Producers holding a code point rather than a string can use `utf8FromCodePoint()`.
 
 ## Usage Examples
 
@@ -281,7 +307,8 @@ bus.processEvents();
 ## Related Documentation
 
 - [Input System](../input/input.md) - Input event handling and polling
-- [Event Architecture](diagrams/events.drawio) - Event system diagrams
+- [Event Architecture (draw.io)](diagrams/events.drawio) - Editable UML diagram
+- [Event Architecture (SVG)](diagrams/events.svg) - Rendered UML diagram
 - [API Documentation](../../README.md) - Full API reference
 
 ## Version History

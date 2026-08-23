@@ -11,8 +11,17 @@
 # Minimum required CMake version
 cmake_minimum_required(VERSION 3.16)
 
+# Version is read from the VERSION file, which release-please owns (release-type: simple).
+# Keeping it here as a literal drifts: it read 1.0.0 while VERSION said 1.3.0, so
+# VERSION/SOVERSION on the shared library were stamped wrong.
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" VNEEVENTS_VERSION_RAW)
+string(STRIP "${VNEEVENTS_VERSION_RAW}" VNEEVENTS_VERSION)
+if(NOT VNEEVENTS_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "VERSION file must contain MAJOR.MINOR.PATCH. Got: '${VNEEVENTS_VERSION}'")
+endif()
+
 # Project declaration
-project(vneevents VERSION 1.0.0 LANGUAGES CXX)
+project(vneevents VERSION ${VNEEVENTS_VERSION} LANGUAGES CXX)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -243,9 +252,11 @@ set(VNEEVENTS_HEADERS
     ${VNE_INCLUDE_DIR}/vertexnova/events/event_bus.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/event_manager.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/key_event.h
+    ${VNE_INCLUDE_DIR}/vertexnova/events/text_input_event.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/mouse_event.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/window_event.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/touch_event.h
+    ${VNE_INCLUDE_DIR}/vertexnova/events/application_event.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/input/input.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/input/input_manager.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/input/input_state.h

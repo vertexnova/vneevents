@@ -14,6 +14,7 @@
 #include "types.h"
 
 #include <sstream>
+#include <string>
 #include <cstdint>
 
 namespace vne::events {
@@ -30,8 +31,8 @@ class VNEEVENTS_API KeyEvent : public Event {
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eKeyboard | EventCategory::eInput; }
 
    protected:
-    KeyEvent(EventType event_type, KeyCode key_code, uint8_t modifiers = 0)
-        : Event(event_type)
+    KeyEvent(EventType event_type, KeyCode key_code, uint8_t modifiers = 0, WindowId window_id = kInvalidWindowId)
+        : Event(event_type, window_id)
         , key_code_(key_code)
         , modifiers_(modifiers) {}
 
@@ -46,14 +47,14 @@ class VNEEVENTS_API KeyEvent : public Event {
  */
 class VNEEVENTS_API KeyPressedEvent : public KeyEvent {
    public:
-    explicit KeyPressedEvent(KeyCode key_code, uint8_t modifiers = 0)
-        : KeyEvent(EventType::eKeyPressed, key_code, modifiers) {}
+    explicit KeyPressedEvent(KeyCode key_code, uint8_t modifiers = 0, WindowId window_id = kInvalidWindowId)
+        : KeyEvent(EventType::eKeyPressed, key_code, modifiers, window_id) {}
 
     [[nodiscard]] std::string name() const override { return "KeyPressed"; }
 
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
-        ss << "KeyPressedEvent: " << static_cast<int>(keyCode());
+        ss << "KeyPressedEvent: " << static_cast<int>(keyCode()) << windowSuffix();
         return ss.str();
     }
 };
@@ -64,14 +65,14 @@ class VNEEVENTS_API KeyPressedEvent : public KeyEvent {
  */
 class VNEEVENTS_API KeyReleasedEvent : public KeyEvent {
    public:
-    explicit KeyReleasedEvent(KeyCode key_code, uint8_t modifiers = 0)
-        : KeyEvent(EventType::eKeyReleased, key_code, modifiers) {}
+    explicit KeyReleasedEvent(KeyCode key_code, uint8_t modifiers = 0, WindowId window_id = kInvalidWindowId)
+        : KeyEvent(EventType::eKeyReleased, key_code, modifiers, window_id) {}
 
     [[nodiscard]] std::string name() const override { return "KeyReleased"; }
 
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
-        ss << "KeyReleasedEvent: " << static_cast<int>(keyCode());
+        ss << "KeyReleasedEvent: " << static_cast<int>(keyCode()) << windowSuffix();
         return ss.str();
     }
 };
@@ -82,8 +83,11 @@ class VNEEVENTS_API KeyReleasedEvent : public KeyEvent {
  */
 class VNEEVENTS_API KeyRepeatEvent : public KeyEvent {
    public:
-    KeyRepeatEvent(KeyCode key_code, uint32_t repeat_count)
-        : KeyEvent(EventType::eKeyRepeat, key_code)
+    KeyRepeatEvent(KeyCode key_code,
+                   uint32_t repeat_count,
+                   uint8_t modifiers = 0,
+                   WindowId window_id = kInvalidWindowId)
+        : KeyEvent(EventType::eKeyRepeat, key_code, modifiers, window_id)
         , repeat_count_(repeat_count) {}
 
     [[nodiscard]] uint32_t repeatCount() const noexcept { return repeat_count_; }
@@ -92,30 +96,12 @@ class VNEEVENTS_API KeyRepeatEvent : public KeyEvent {
 
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
-        ss << "KeyRepeatEvent: " << static_cast<int>(keyCode()) << " (" << repeat_count_ << ")";
+        ss << "KeyRepeatEvent: " << static_cast<int>(keyCode()) << " (" << repeat_count_ << ")" << windowSuffix();
         return ss.str();
     }
 
    private:
     uint32_t repeat_count_;
-};
-
-/**
- * @class KeyTypedEvent
- * @brief Event generated when a character is typed.
- */
-class VNEEVENTS_API KeyTypedEvent : public KeyEvent {
-   public:
-    explicit KeyTypedEvent(KeyCode key_code)
-        : KeyEvent(EventType::eKeyTyped, key_code) {}
-
-    [[nodiscard]] std::string name() const override { return "KeyTyped"; }
-
-    [[nodiscard]] std::string toString() const override {
-        std::ostringstream ss;
-        ss << "KeyTypedEvent: " << static_cast<int>(keyCode());
-        return ss.str();
-    }
 };
 
 }  // namespace vne::events
