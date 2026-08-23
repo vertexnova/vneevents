@@ -93,31 +93,31 @@ Input::nextFrame();  // call once per frame
 
 ## Event types
 
-| Event class | EventType | Category |
-|-------------|-----------|----------|
-| `KeyPressedEvent` | `eKeyPressed` | Keyboard, Input |
-| `KeyReleasedEvent` | `eKeyReleased` | Keyboard, Input |
-| `KeyRepeatEvent` | `eKeyRepeat` | Keyboard, Input |
-| `MouseButtonPressedEvent` | `eMouseButtonPressed` | MouseButton, Input |
-| `MouseButtonReleasedEvent` | `eMouseButtonReleased` | MouseButton, Input |
-| `MouseButtonDoubleClickedEvent` | `eMouseButtonDoubleClicked` | MouseButton, Input |
-| `MouseMovedEvent` | `eMouseMoved` | Mouse, Input |
-| `MouseScrolledEvent` | `eMouseScrolled` | Mouse, Input |
-| `TextInputEvent` | `eTextInput` | Keyboard, Input |
-| `WindowCloseEvent` | `eWindowClose` | Window |
-| `WindowResizeEvent` | `eWindowResize` | Window |
-| `WindowFocusEvent` | `eWindowFocus` | Window |
-| `WindowMinimizeEvent` | `eWindowMinimize` | Window |
-| `WindowRestoreEvent` | `eWindowRestore` | Window |
-| `WindowMoveEvent` | `eWindowMove` | Window |
-| `WindowDpiChangedEvent` | `eWindowDpiChanged` | Window |
-| `WindowSafeAreaChangedEvent` | `eWindowSafeAreaChanged` | Window |
-| `TouchPressEvent` | `eTouchPress` | TouchScreen, Input |
-| `TouchReleaseEvent` | `eTouchRelease` | TouchScreen, Input |
-| `TouchMoveEvent` | `eTouchMove` | TouchScreen, Input |
-| `ApplicationPauseEvent` | `eApplicationPause` | Application |
-| `ApplicationResumeEvent` | `eApplicationResume` | Application |
-| `ApplicationLowMemoryEvent` | `eApplicationLowMemory` | Application |
+| Event class | EventType | `categoryFlags()` |
+|-------------|-----------|-------------------|
+| `KeyPressedEvent` | `eKeyPressed` | `eKeyboard` \| `eInput` |
+| `KeyReleasedEvent` | `eKeyReleased` | `eKeyboard` \| `eInput` |
+| `KeyRepeatEvent` | `eKeyRepeat` | `eKeyboard` \| `eInput` |
+| `MouseButtonPressedEvent` | `eMouseButtonPressed` | `eMouseButton` \| `eInput` |
+| `MouseButtonReleasedEvent` | `eMouseButtonReleased` | `eMouseButton` \| `eInput` |
+| `MouseButtonDoubleClickedEvent` | `eMouseButtonDoubleClicked` | `eMouseButton` \| `eInput` |
+| `MouseMovedEvent` | `eMouseMoved` | `eMouse` \| `eInput` |
+| `MouseScrolledEvent` | `eMouseScrolled` | `eMouse` \| `eInput` |
+| `TextInputEvent` | `eTextInput` | `eKeyboard` \| `eInput` |
+| `WindowCloseEvent` | `eWindowClose` | `eWindow` |
+| `WindowResizeEvent` | `eWindowResize` | `eWindow` |
+| `WindowFocusEvent` | `eWindowFocus` | `eWindow` |
+| `WindowMinimizeEvent` | `eWindowMinimize` | `eWindow` |
+| `WindowRestoreEvent` | `eWindowRestore` | `eWindow` |
+| `WindowMoveEvent` | `eWindowMove` | `eWindow` |
+| `WindowDpiChangedEvent` | `eWindowDpiChanged` | `eWindow` |
+| `WindowSafeAreaChangedEvent` | `eWindowSafeAreaChanged` | `eWindow` |
+| `TouchPressEvent` | `eTouchPress` | `eTouchScreen` \| `eInput` |
+| `TouchReleaseEvent` | `eTouchRelease` | `eTouchScreen` \| `eInput` |
+| `TouchMoveEvent` | `eTouchMove` | `eTouchScreen` \| `eInput` |
+| `ApplicationPauseEvent` | `eApplicationPause` | `eApplication` |
+| `ApplicationResumeEvent` | `eApplicationResume` | `eApplication` |
+| `ApplicationLowMemoryEvent` | `eApplicationLowMemory` | `eApplication` |
 
 Every event carries a `WindowId` identifying which window it came from — `event.windowId()`, or
 `kInvalidWindowId` when the producer manages a single window or the event has no window scope.

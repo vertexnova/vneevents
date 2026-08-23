@@ -74,9 +74,10 @@ Events can belong to multiple categories for efficient filtering:
 - `eApplication`: Application-level events
 - `eInput`: General input events
 - `eKeyboard`: Keyboard-specific events
-- `eMouse`: Mouse-specific events
+- `eMouse`: Mouse motion and scroll events
+- `eMouseButton`: Mouse button events
+- `eTouchScreen`: Touch input events
 - `eWindow`: Window-related events
-- `eTouch`: Touch input events
 
 ### Event Types
 
@@ -92,31 +93,31 @@ Slot 6 in `EventType` is reserved (formerly `eKeyTyped`, removed in favour of `e
 
 #### Event classes and `EventType`
 
-| Event class | Base class | EventType | Category |
-|-------------|------------|-----------|----------|
-| `ApplicationLowMemoryEvent` | `ApplicationEvent` | `eApplicationLowMemory` | Application |
-| `ApplicationPauseEvent` | `ApplicationEvent` | `eApplicationPause` | Application |
-| `ApplicationResumeEvent` | `ApplicationEvent` | `eApplicationResume` | Application |
-| `KeyPressedEvent` | `KeyEvent` | `eKeyPressed` | Keyboard, Input |
-| `KeyReleasedEvent` | `KeyEvent` | `eKeyReleased` | Keyboard, Input |
-| `KeyRepeatEvent` | `KeyEvent` | `eKeyRepeat` | Keyboard, Input |
-| `MouseButtonDoubleClickedEvent` | `MouseButtonEvent` | `eMouseButtonDoubleClicked` | MouseButton, Input |
-| `MouseButtonPressedEvent` | `MouseButtonEvent` | `eMouseButtonPressed` | MouseButton, Input |
-| `MouseButtonReleasedEvent` | `MouseButtonEvent` | `eMouseButtonReleased` | MouseButton, Input |
-| `MouseMovedEvent` | `Event` | `eMouseMoved` | Mouse, Input |
-| `MouseScrolledEvent` | `Event` | `eMouseScrolled` | Mouse, Input |
-| `TextInputEvent` | `Event` | `eTextInput` | Keyboard, Input |
-| `TouchMoveEvent` | `TouchEvent` | `eTouchMove` | TouchScreen, Input |
-| `TouchPressEvent` | `TouchEvent` | `eTouchPress` | TouchScreen, Input |
-| `TouchReleaseEvent` | `TouchEvent` | `eTouchRelease` | TouchScreen, Input |
-| `WindowCloseEvent` | `WindowEvent` | `eWindowClose` | Window |
-| `WindowDpiChangedEvent` | `WindowEvent` | `eWindowDpiChanged` | Window |
-| `WindowFocusEvent` | `WindowEvent` | `eWindowFocus` | Window |
-| `WindowMinimizeEvent` | `WindowEvent` | `eWindowMinimize` | Window |
-| `WindowMoveEvent` | `WindowEvent` | `eWindowMove` | Window |
-| `WindowResizeEvent` | `WindowEvent` | `eWindowResize` | Window |
-| `WindowRestoreEvent` | `WindowEvent` | `eWindowRestore` | Window |
-| `WindowSafeAreaChangedEvent` | `WindowEvent` | `eWindowSafeAreaChanged` | Window |
+| Event class | Base class | EventType | `categoryFlags()` |
+|-------------|------------|-----------|-------------------|
+| `ApplicationLowMemoryEvent` | `ApplicationEvent` | `eApplicationLowMemory` | `eApplication` |
+| `ApplicationPauseEvent` | `ApplicationEvent` | `eApplicationPause` | `eApplication` |
+| `ApplicationResumeEvent` | `ApplicationEvent` | `eApplicationResume` | `eApplication` |
+| `KeyPressedEvent` | `KeyEvent` | `eKeyPressed` | `eKeyboard` \| `eInput` |
+| `KeyReleasedEvent` | `KeyEvent` | `eKeyReleased` | `eKeyboard` \| `eInput` |
+| `KeyRepeatEvent` | `KeyEvent` | `eKeyRepeat` | `eKeyboard` \| `eInput` |
+| `MouseButtonDoubleClickedEvent` | `MouseButtonEvent` | `eMouseButtonDoubleClicked` | `eMouseButton` \| `eInput` |
+| `MouseButtonPressedEvent` | `MouseButtonEvent` | `eMouseButtonPressed` | `eMouseButton` \| `eInput` |
+| `MouseButtonReleasedEvent` | `MouseButtonEvent` | `eMouseButtonReleased` | `eMouseButton` \| `eInput` |
+| `MouseMovedEvent` | `Event` | `eMouseMoved` | `eMouse` \| `eInput` |
+| `MouseScrolledEvent` | `Event` | `eMouseScrolled` | `eMouse` \| `eInput` |
+| `TextInputEvent` | `Event` | `eTextInput` | `eKeyboard` \| `eInput` |
+| `TouchMoveEvent` | `TouchEvent` | `eTouchMove` | `eTouchScreen` \| `eInput` |
+| `TouchPressEvent` | `TouchEvent` | `eTouchPress` | `eTouchScreen` \| `eInput` |
+| `TouchReleaseEvent` | `TouchEvent` | `eTouchRelease` | `eTouchScreen` \| `eInput` |
+| `WindowCloseEvent` | `WindowEvent` | `eWindowClose` | `eWindow` |
+| `WindowDpiChangedEvent` | `WindowEvent` | `eWindowDpiChanged` | `eWindow` |
+| `WindowFocusEvent` | `WindowEvent` | `eWindowFocus` | `eWindow` |
+| `WindowMinimizeEvent` | `WindowEvent` | `eWindowMinimize` | `eWindow` |
+| `WindowMoveEvent` | `WindowEvent` | `eWindowMove` | `eWindow` |
+| `WindowResizeEvent` | `WindowEvent` | `eWindowResize` | `eWindow` |
+| `WindowRestoreEvent` | `WindowEvent` | `eWindowRestore` | `eWindow` |
+| `WindowSafeAreaChangedEvent` | `WindowEvent` | `eWindowSafeAreaChanged` | `eWindow` |
 
 For `WindowFocusEvent`, use `focused()` (or `toString()`) to distinguish focus gained vs lost; `name()` is `"WindowFocus"` for both.
 

@@ -24,6 +24,12 @@ namespace vne::events {
  *
  * This abstract class defines the common interface for all events.
  * Events have a type, timestamp, category flags, and can be marked as handled.
+ *
+ * Thread safety: individual `Event` objects are not synchronized. Concurrent const
+ * reads (`windowId()`, `type()`, `timestamp()`, `isHandled()`, `categoryFlags()`,
+ * `name()`, `toString()`) are safe only when no thread mutates the same instance.
+ * `setHandled()` must not run concurrently with any other access on that instance;
+ * callers sharing an event across threads must provide external synchronization.
  */
 class VNEEVENTS_API Event {
    public:
@@ -45,16 +51,29 @@ class VNEEVENTS_API Event {
      * @brief Identifier of the window this event originated from.
      * @return The producer-assigned window id, or kInvalidWindowId when the event has no window scope
      *         (application lifecycle events, synthetic events, producers that do not stamp an id).
+     *
+     * Const; subject to the class thread-safety contract (safe to read concurrently only when
+     * no thread calls `setHandled()` on the same instance).
      */
     [[nodiscard]] WindowId windowId() const noexcept { return window_id_; }
 
     /// Get the timestamp of when the event occurred
     [[nodiscard]] TimeStamp timestamp() const noexcept { return timestamp_; }
 
-    /// Check if the event has been handled
+    /**
+     * @brief Whether a listener has marked this event as consumed.
+     *
+     * Const; subject to the class thread-safety contract. Returns the value last written by
+     * `setHandled()`; there is no API to clear the handled flag.
+     */
     [[nodiscard]] bool isHandled() const noexcept { return handled_; }
 
-    /// Mark the event as handled
+    /**
+     * @brief Mark this event as handled so later listeners can skip it.
+     *
+     * Mutates `handled_` to `true`. Not thread-safe; must not run concurrently with any other
+     * access on the same instance (including concurrent `isHandled()` calls).
+     */
     void setHandled() noexcept { handled_ = true; }
 
     /// Check if a category flag exists in the event

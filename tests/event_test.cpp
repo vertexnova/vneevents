@@ -390,6 +390,10 @@ TEST(TextInputEventTest, CarriesUtf8Text) {
     EXPECT_TRUE(event.isInCategory(EventCategory::eInput));
 }
 
+TEST(TextInputEventTest, RejectsEmptyText) {
+    EXPECT_THROW(TextInputEvent(""), std::invalid_argument);
+}
+
 TEST(TextInputEventTest, HoldsMultiByteAndMultiCodePointCommits) {
     // IME commits and emoji arrive as one event with several code points.
     TextInputEvent event("\xE3\x81\x82\xE3\x81\x84");
@@ -403,10 +407,11 @@ TEST(TextInputEventTest, HoldsMultiByteAndMultiCodePointCommits) {
 // ============================================================================
 
 TEST(Utf8FromCodePointTest, EncodesEachLength) {
-    EXPECT_EQ(utf8FromCodePoint(U'A'), "A");                          // 1 byte
-    EXPECT_EQ(utf8FromCodePoint(U'é'), "\xC3\xA9");                   // 2 bytes, e-acute
-    EXPECT_EQ(utf8FromCodePoint(U'あ'), "\xE3\x81\x82");              // 3 bytes, hiragana A
-    EXPECT_EQ(utf8FromCodePoint(U'\U0001F600'), "\xF0\x9F\x98\x80");  // 4 bytes, grinning face
+    EXPECT_EQ(utf8FromCodePoint(U'A'), "A");  // 1 byte
+    // Use numeric code points: MSVC rejects U'é' / U'あ' when the source file is not UTF-8.
+    EXPECT_EQ(utf8FromCodePoint(static_cast<char32_t>(0x00E9)), "\xC3\xA9");       // 2 bytes, e-acute
+    EXPECT_EQ(utf8FromCodePoint(static_cast<char32_t>(0x3042)), "\xE3\x81\x82");   // 3 bytes, hiragana A
+    EXPECT_EQ(utf8FromCodePoint(U'\U0001F600'), "\xF0\x9F\x98\x80");               // 4 bytes, grinning face
 }
 
 TEST(Utf8FromCodePointTest, SurvivesTheRangeTheOldKeyCodePathDropped) {

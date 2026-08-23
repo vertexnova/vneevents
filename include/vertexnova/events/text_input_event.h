@@ -14,6 +14,7 @@
 #include "types.h"
 
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -67,9 +68,13 @@ class VNEEVENTS_API TextInputEvent : public Event {
    public:
     explicit TextInputEvent(std::string utf8_text, WindowId window_id = kInvalidWindowId)
         : Event(EventType::eTextInput, window_id)
-        , text_(std::move(utf8_text)) {}
+        , text_(std::move(utf8_text)) {
+        if (text_.empty()) {
+            throw std::invalid_argument("TextInputEvent: utf8_text must not be empty");
+        }
+    }
 
-    /// The committed text, UTF-8 encoded. Never empty: producers drop empty commits.
+    /// The committed text, UTF-8 encoded. Never empty.
     [[nodiscard]] const std::string& text() const noexcept { return text_; }
 
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eKeyboard | EventCategory::eInput; }
