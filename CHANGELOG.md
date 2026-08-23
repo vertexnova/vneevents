@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/vertexnova/vneevents/compare/v1.4.0...v1.5.0) (2026-08-23)
+
+
+### Features
+
+* Enhancing the Cmake documentation and fixing release build. ([#20](https://github.com/vertexnova/vneevents/issues/20)) ([0fadcce](https://github.com/vertexnova/vneevents/commit/0fadcce5b28226bf78eebb05cfd43215d0691e16))
+
 ## [1.4.0](https://github.com/vertexnova/vneevents/compare/v1.3.0...v1.4.0) (2026-08-23)
 
 
