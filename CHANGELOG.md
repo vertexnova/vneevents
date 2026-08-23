@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/vertexnova/vneevents/compare/v1.3.0...v1.4.0) (2026-08-23)
+
+
+### Features
+
+* Enhance event system with application lifecycle events and text input handling ([#18](https://github.com/vertexnova/vneevents/issues/18)) ([098c5bf](https://github.com/vertexnova/vneevents/commit/098c5bf4f78d7b0326336117ada31fe70b944114))
+
 ## [1.3.0](https://github.com/vertexnova/vneevents/compare/v1.2.2...v1.3.0) (2026-06-10)
 
 
