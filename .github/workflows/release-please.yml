@@ -161,7 +161,8 @@ jobs:
           fi
           BUILD_DIR="${{ matrix.build_dir }}"
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            cmake -B "$BUILD_DIR" -S . -G "Visual Studio 17 2022" -A x64 \
+            # Let CMake pick the installed VS generator (windows-latest ships VS 2026 as of 2026-06).
+            cmake -B "$BUILD_DIR" -S . -A x64 \
               -DCMAKE_BUILD_TYPE=Release \
               -DVNEEVENTS_LIB_TYPE=shared \
               -DBUILD_TESTS=OFF \
@@ -293,8 +294,9 @@ jobs:
           done
           case "${{ matrix.platform }}" in
             web-emscripten)
-              if [ -z "$(find "$INSTALL" -type f \( -name '*.wasm' -o -name '*.a' -o -name '*.js' \) -print -quit)" ]; then
-                echo "::error::Web install: expected some of .wasm / .a / .js under install/"
+              # Emscripten SHARED installs as .so (wasm side module); STATIC installs as .a.
+              if [ -z "$(find "$INSTALL" -type f \( -name '*.wasm' -o -name '*.a' -o -name '*.js' -o -name '*.so' \) -print -quit)" ]; then
+                echo "::error::Web install: expected some of .wasm / .a / .js / .so under install/"
                 find "$INSTALL" -type f | sort
                 exit 1
               fi
