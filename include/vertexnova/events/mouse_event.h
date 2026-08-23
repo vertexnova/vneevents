@@ -52,8 +52,9 @@ class VNEEVENTS_API MouseButtonEvent : public Event {
                      MouseButton button,
                      uint8_t modifiers = 0,
                      double x = std::numeric_limits<double>::quiet_NaN(),
-                     double y = std::numeric_limits<double>::quiet_NaN())
-        : Event(type)
+                     double y = std::numeric_limits<double>::quiet_NaN(),
+                     WindowId window_id = kInvalidWindowId)
+        : Event(type, window_id)
         , button_(button)
         , modifiers_(modifiers)
         , x_(x)
@@ -79,12 +80,14 @@ class VNEEVENTS_API MouseButtonPressedEvent : public MouseButtonEvent {
      * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
      * @param x Cursor x in window/client coords (pixels); NaN if not available.
      * @param y Cursor y in window/client coords (pixels); NaN if not available.
+     * @param window_id Window the button event was delivered to.
      */
     explicit MouseButtonPressedEvent(MouseButton button,
                                      uint8_t modifiers = 0,
                                      double x = std::numeric_limits<double>::quiet_NaN(),
-                                     double y = std::numeric_limits<double>::quiet_NaN())
-        : MouseButtonEvent(EventType::eMouseButtonPressed, button, modifiers, x, y) {}
+                                     double y = std::numeric_limits<double>::quiet_NaN(),
+                                     WindowId window_id = kInvalidWindowId)
+        : MouseButtonEvent(EventType::eMouseButtonPressed, button, modifiers, x, y, window_id) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonPressed"; }
 
@@ -94,6 +97,7 @@ class VNEEVENTS_API MouseButtonPressedEvent : public MouseButtonEvent {
         if (hasPosition()) {
             ss << " at (" << x() << ", " << y() << ")";
         }
+        ss << windowSuffix();
         return ss.str();
     }
 };
@@ -111,12 +115,14 @@ class VNEEVENTS_API MouseButtonReleasedEvent : public MouseButtonEvent {
      * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
      * @param x Cursor x in window/client coords (pixels); NaN if not available.
      * @param y Cursor y in window/client coords (pixels); NaN if not available.
+     * @param window_id Window the button event was delivered to.
      */
     explicit MouseButtonReleasedEvent(MouseButton button,
                                       uint8_t modifiers = 0,
                                       double x = std::numeric_limits<double>::quiet_NaN(),
-                                      double y = std::numeric_limits<double>::quiet_NaN())
-        : MouseButtonEvent(EventType::eMouseButtonReleased, button, modifiers, x, y) {}
+                                      double y = std::numeric_limits<double>::quiet_NaN(),
+                                      WindowId window_id = kInvalidWindowId)
+        : MouseButtonEvent(EventType::eMouseButtonReleased, button, modifiers, x, y, window_id) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonReleased"; }
 
@@ -126,6 +132,7 @@ class VNEEVENTS_API MouseButtonReleasedEvent : public MouseButtonEvent {
         if (hasPosition()) {
             ss << " at (" << x() << ", " << y() << ")";
         }
+        ss << windowSuffix();
         return ss.str();
     }
 };
@@ -143,12 +150,14 @@ class VNEEVENTS_API MouseButtonDoubleClickedEvent : public MouseButtonEvent {
      * @param modifiers Modifier key flags (e.g. Shift, Ctrl).
      * @param x Cursor x in window/client coords (pixels); NaN if not available.
      * @param y Cursor y in window/client coords (pixels); NaN if not available.
+     * @param window_id Window the button event was delivered to.
      */
     explicit MouseButtonDoubleClickedEvent(MouseButton button,
                                            uint8_t modifiers = 0,
                                            double x = std::numeric_limits<double>::quiet_NaN(),
-                                           double y = std::numeric_limits<double>::quiet_NaN())
-        : MouseButtonEvent(EventType::eMouseButtonDoubleClicked, button, modifiers, x, y) {}
+                                           double y = std::numeric_limits<double>::quiet_NaN(),
+                                           WindowId window_id = kInvalidWindowId)
+        : MouseButtonEvent(EventType::eMouseButtonDoubleClicked, button, modifiers, x, y, window_id) {}
 
     [[nodiscard]] std::string name() const override { return "MouseButtonDoubleClicked"; }
 
@@ -158,6 +167,7 @@ class VNEEVENTS_API MouseButtonDoubleClickedEvent : public MouseButtonEvent {
         if (hasPosition()) {
             ss << " at (" << x() << ", " << y() << ")";
         }
+        ss << windowSuffix();
         return ss.str();
     }
 };
@@ -168,8 +178,8 @@ class VNEEVENTS_API MouseButtonDoubleClickedEvent : public MouseButtonEvent {
  */
 class VNEEVENTS_API MouseMovedEvent : public Event {
    public:
-    MouseMovedEvent(double x_pos, double y_pos, uint8_t modifiers = 0)
-        : Event(EventType::eMouseMoved)
+    MouseMovedEvent(double x_pos, double y_pos, uint8_t modifiers = 0, WindowId window_id = kInvalidWindowId)
+        : Event(EventType::eMouseMoved, window_id)
         , x_(x_pos)
         , y_(y_pos)
         , modifiers_(modifiers) {}
@@ -184,7 +194,7 @@ class VNEEVENTS_API MouseMovedEvent : public Event {
 
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
-        ss << "MouseMovedEvent: (" << x_ << ", " << y_ << ")";
+        ss << "MouseMovedEvent: (" << x_ << ", " << y_ << ")" << windowSuffix();
         return ss.str();
     }
 
@@ -200,13 +210,36 @@ class VNEEVENTS_API MouseMovedEvent : public Event {
  */
 class VNEEVENTS_API MouseScrolledEvent : public Event {
    public:
-    MouseScrolledEvent(double x_offset, double y_offset)
-        : Event(EventType::eMouseScrolled)
+    /**
+     * @param x_offset Horizontal scroll delta.
+     * @param y_offset Vertical scroll delta.
+     * @param x Cursor x in window/client coords (pixels); NaN if not available.
+     * @param y Cursor y in window/client coords (pixels); NaN if not available.
+     * @param modifiers Modifier key flags (e.g. Shift, Ctrl) active during the scroll.
+     * @param window_id Window the scroll was delivered to.
+     */
+    MouseScrolledEvent(double x_offset,
+                       double y_offset,
+                       double x = std::numeric_limits<double>::quiet_NaN(),
+                       double y = std::numeric_limits<double>::quiet_NaN(),
+                       uint8_t modifiers = 0,
+                       WindowId window_id = kInvalidWindowId)
+        : Event(EventType::eMouseScrolled, window_id)
         , x_offset_(x_offset)
-        , y_offset_(y_offset) {}
+        , y_offset_(y_offset)
+        , x_(x)
+        , y_(y)
+        , modifiers_(modifiers) {}
 
     [[nodiscard]] double xOffset() const noexcept { return x_offset_; }
     [[nodiscard]] double yOffset() const noexcept { return y_offset_; }
+    /** Cursor x in window/client coords (pixels) at scroll time; NaN if not provided. */
+    [[nodiscard]] double x() const noexcept { return x_; }
+    /** Cursor y in window/client coords (pixels) at scroll time; NaN if not provided. */
+    [[nodiscard]] double y() const noexcept { return y_; }
+    /** True if a real cursor position was supplied (x and y are not NaN). */
+    [[nodiscard]] bool hasPosition() const noexcept { return !std::isnan(x_) && !std::isnan(y_); }
+    [[nodiscard]] uint8_t modifiers() const noexcept { return modifiers_; }
 
     [[nodiscard]] int categoryFlags() const override { return EventCategory::eMouse | EventCategory::eInput; }
 
@@ -215,12 +248,19 @@ class VNEEVENTS_API MouseScrolledEvent : public Event {
     [[nodiscard]] std::string toString() const override {
         std::ostringstream ss;
         ss << "MouseScrolledEvent: (" << x_offset_ << ", " << y_offset_ << ")";
+        if (hasPosition()) {
+            ss << " at (" << x_ << ", " << y_ << ")";
+        }
+        ss << windowSuffix();
         return ss.str();
     }
 
    private:
     double x_offset_;
     double y_offset_;
+    double x_;
+    double y_;
+    uint8_t modifiers_;
 };
 
 }  // namespace vne::events

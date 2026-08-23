@@ -201,4 +201,22 @@ TEST(EventManagerTest, ClearPendingEvents) {
     EXPECT_EQ(manager.pendingEventCount(), 0u);
 }
 
+TEST(EventManagerTest, WindowIdSurvivesTheQueue) {
+    class IdCapturingListener : public EventListener {
+       public:
+        void onEvent(const Event& event) override { last_window_id = event.windowId(); }
+        std::atomic<WindowId> last_window_id{kInvalidWindowId};
+    };
+
+    auto& manager = EventManager::instance();
+    auto listener = std::make_shared<IdCapturingListener>();
+
+    manager.registerListener(EventType::eWindowResize, listener);
+    manager.pushEvent(std::make_unique<WindowResizeEvent>(1024U, 768U, 99U));
+    manager.processEvents();
+
+    EXPECT_EQ(listener->last_window_id.load(), 99U);
+    manager.unregisterListener(EventType::eWindowResize, listener.get());
+}
+
 }  // namespace vne::events

@@ -33,6 +33,19 @@ constexpr T bit(T x) noexcept {
 using TimeStamp = std::chrono::time_point<std::chrono::system_clock>;
 
 /**
+ * @brief Opaque identifier of the window an event originated from.
+ *
+ * Producers (e.g. vne::xwin) assign a stable, non-zero id per window and stamp it on every
+ * event they emit, so that listeners can attribute an event to a specific window without
+ * relying on raw pointers. Events with no meaningful window scope (application lifecycle,
+ * synthetic events) carry kInvalidWindowId.
+ */
+using WindowId = std::uint64_t;
+
+/// Sentinel meaning "no particular window"; the default for every event constructor.
+inline constexpr WindowId kInvalidWindowId = 0;
+
+/**
  * @brief Callback function type for event handlers.
  */
 template<typename T>
@@ -49,7 +62,9 @@ enum class EventType : uint8_t {
     eKeyPressed = 3,
     eKeyReleased = 4,
     eKeyRepeat = 5,
-    eKeyTyped = 6,
+    // Slot 6 was eKeyTyped, removed in favour of eTextInput: it carried a KeyCode (int16_t)
+    // rather than characters, so it could not represent case, accents, IME commits or emoji.
+    // Left reserved so existing numeric IDs do not shift.
     eMouseButtonPressed = 7,
     eMouseButtonReleased = 8,
     eMouseMoved = 9,
@@ -58,7 +73,22 @@ enum class EventType : uint8_t {
     eTouchRelease = 12,
     eTouchMove = 13,
     eMouseButtonDoubleClicked = 14,
-    eWindowFocus = 15  // appended to preserve existing numeric IDs
+    eWindowFocus = 15,  // appended to preserve existing numeric IDs
+
+    // Window state. Appended to preserve existing numeric IDs.
+    eWindowMinimize = 16,
+    eWindowRestore = 17,
+    eWindowMove = 18,
+    eWindowDpiChanged = 19,
+    eWindowSafeAreaChanged = 20,
+
+    // Application lifecycle (process-scoped; carries kInvalidWindowId).
+    eApplicationPause = 21,
+    eApplicationResume = 22,
+    eApplicationLowMemory = 23,
+
+    // Committed text from the platform IME / character input path.
+    eTextInput = 24
 };
 
 /**
@@ -72,7 +102,8 @@ enum EventCategory : uint8_t {
     eMouse = bit<uint8_t>(2),
     eMouseButton = bit<uint8_t>(3),
     eTouchScreen = bit<uint8_t>(4),
-    eWindow = bit<uint8_t>(5)
+    eWindow = bit<uint8_t>(5),
+    eApplication = bit<uint8_t>(6)
 };
 
 /**
@@ -91,7 +122,10 @@ enum class MouseButton : uint8_t {
     eLeft = eButton0,
     eRight = eButton1,
     eMiddle = eButton2,
-    eLast = eButton7
+    eLast = eButton7,
+
+    /// No mapping exists for the platform button. Value chosen so eLeft/eRight/eMiddle keep 0/1/2.
+    eUnknown = 0xFF
 };
 
 /**

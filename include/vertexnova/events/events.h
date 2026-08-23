@@ -15,7 +15,7 @@
  * @brief VertexNova Events - A lightweight, thread-safe event system.
  *
  * This library provides:
- * - Event base class and concrete event types (keyboard, mouse, window, touch)
+ * - Event base class and concrete event types (keyboard, mouse, window, touch, app lifecycle)
  * - Thread-safe event queue for deferred event processing
  * - Event dispatcher with listener registration
  * - Event bus combining queue and dispatcher
@@ -56,9 +56,11 @@
 
 // Concrete event types
 #include "key_event.h"
+#include "text_input_event.h"
 #include "mouse_event.h"
 #include "window_event.h"
 #include "touch_event.h"
+#include "application_event.h"
 
 // Input polling
 #include "input/input_manager.h"
