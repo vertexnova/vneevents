@@ -37,15 +37,19 @@ namespace vne::events {
         return out;
     }
     if (cp < 0x80U) {
+        // 1-byte ASCII (U+0000..U+007F)
         out += static_cast<char>(cp);
     } else if (cp < 0x800U) {
+        // 2-byte sequence (U+0080..U+07FF)
         out += static_cast<char>(0xC0U | (cp >> 6U));
         out += static_cast<char>(0x80U | (cp & 0x3FU));
     } else if (cp < 0x10000U) {
+        // 3-byte sequence (U+0800..U+FFFF, excluding surrogates)
         out += static_cast<char>(0xE0U | (cp >> 12U));
         out += static_cast<char>(0x80U | ((cp >> 6U) & 0x3FU));
         out += static_cast<char>(0x80U | (cp & 0x3FU));
     } else {
+        // 4-byte sequence (U+10000..U+10FFFF)
         out += static_cast<char>(0xF0U | (cp >> 18U));
         out += static_cast<char>(0x80U | ((cp >> 12U) & 0x3FU));
         out += static_cast<char>(0x80U | ((cp >> 6U) & 0x3FU));
@@ -63,6 +67,8 @@ namespace vne::events {
  * text() is UTF-8 and may hold more than one code point per event (IME composition commit,
  * dead-key composition, emoji, surrogate pairs reassembled by the producer). This is the event
  * to feed a text field; use KeyPressedEvent for shortcuts and navigation.
+ *
+ * @throws std::invalid_argument if @p utf8_text is empty.
  */
 class VNEEVENTS_API TextInputEvent : public Event {
    public:

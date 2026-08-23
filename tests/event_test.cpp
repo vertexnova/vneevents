@@ -319,34 +319,38 @@ TEST(WindowStateEventTest, Restore) {
 
     EXPECT_EQ(event.type(), EventType::eWindowRestore);
     EXPECT_EQ(event.name(), "WindowRestore");
+    EXPECT_EQ(event.windowId(), 3U);
     EXPECT_TRUE(event.isInCategory(EventCategory::eWindow));
 }
 
 TEST(WindowStateEventTest, Move) {
-    WindowMoveEvent event(-40, 120);
+    WindowMoveEvent event(-40, 120, 3U);
 
     EXPECT_EQ(event.type(), EventType::eWindowMove);
     EXPECT_EQ(event.x(), -40);
     EXPECT_EQ(event.y(), 120);
-    EXPECT_EQ(event.toString(), "WindowMoveEvent: (-40, 120)");
+    EXPECT_EQ(event.windowId(), 3U);
+    EXPECT_EQ(event.toString(), "WindowMoveEvent: (-40, 120) [window 3]");
 }
 
 TEST(WindowStateEventTest, DpiChanged) {
-    WindowDpiChangedEvent event(2.0F);
+    WindowDpiChangedEvent event(2.0F, 3U);
 
     EXPECT_EQ(event.type(), EventType::eWindowDpiChanged);
     EXPECT_FLOAT_EQ(event.scale(), 2.0F);
+    EXPECT_EQ(event.windowId(), 3U);
     EXPECT_TRUE(event.isInCategory(EventCategory::eWindow));
 }
 
 TEST(WindowStateEventTest, SafeAreaChanged) {
-    WindowSafeAreaChangedEvent event(59.0F, 0.0F, 34.0F, 0.0F);
+    WindowSafeAreaChangedEvent event(59.0F, 0.0F, 34.0F, 0.0F, 3U);
 
     EXPECT_EQ(event.type(), EventType::eWindowSafeAreaChanged);
     EXPECT_FLOAT_EQ(event.top(), 59.0F);
     EXPECT_FLOAT_EQ(event.left(), 0.0F);
     EXPECT_FLOAT_EQ(event.bottom(), 34.0F);
     EXPECT_FLOAT_EQ(event.right(), 0.0F);
+    EXPECT_EQ(event.windowId(), 3U);
 }
 
 // ============================================================================
@@ -396,8 +400,10 @@ TEST(TextInputEventTest, RejectsEmptyText) {
 
 TEST(TextInputEventTest, HoldsMultiByteAndMultiCodePointCommits) {
     // IME commits and emoji arrive as one event with several code points.
-    TextInputEvent event("\xE3\x81\x82\xE3\x81\x84");
+    const std::string expected = "\xE3\x81\x82\xE3\x81\x84";
+    TextInputEvent event(expected);
 
+    EXPECT_EQ(event.text(), expected);
     EXPECT_EQ(event.text().size(), 6U);
     EXPECT_NE(event.toString().find("TextInputEvent"), std::string::npos);
 }
