@@ -11,10 +11,11 @@
  */
 
 #include "event.h"
-#include "internal/read_write_mutex.h"
 
-#include <queue>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
+#include <queue>
 
 namespace vne::events {
 
@@ -42,16 +43,21 @@ class VNEEVENTS_API EventQueue {
      * @param event The event to push.
      */
     void push(EventPtr event) {
-        internal::WriteLockGuard lock(mutex_);
-        queue_.push(std::move(event));
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            queue_.push(std::move(event));
+        }
+        condition_.notify_one();
     }
 
     /**
      * @brief Pop an event from the front of the queue.
      * @return The event, or nullptr if the queue is empty.
+     *
+     * Non-blocking: returns nullptr immediately when the queue is empty.
      */
     [[nodiscard]] EventPtr pop() {
-        internal::WriteLockGuard lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         if (queue_.empty()) {
             return nullptr;
         }
@@ -65,7 +71,7 @@ class VNEEVENTS_API EventQueue {
      * @return True if the queue is empty.
      */
     [[nodiscard]] bool empty() const {
-        internal::ReadLockGuard lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         return queue_.empty();
     }
 
@@ -74,7 +80,7 @@ class VNEEVENTS_API EventQueue {
      * @return The number of events.
      */
     [[nodiscard]] size_t size() const {
-        internal::ReadLockGuard lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         return queue_.size();
     }
 
@@ -82,7 +88,7 @@ class VNEEVENTS_API EventQueue {
      * @brief Clear all events from the queue.
      */
     void clear() {
-        internal::WriteLockGuard lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         while (!queue_.empty()) {
             queue_.pop();
         }
@@ -90,7 +96,8 @@ class VNEEVENTS_API EventQueue {
 
    private:
     std::queue<EventPtr> queue_;
-    mutable internal::ReadWriteMutex mutex_;
+    mutable std::mutex mutex_;
+    std::condition_variable condition_;
 };
 
 }  // namespace vne::events

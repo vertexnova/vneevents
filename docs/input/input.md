@@ -46,7 +46,7 @@ Manages input devices and coordinates input state updates. Provides singleton ac
 
 ### InputState - State Management
 
-Thread-safe input state tracking with per-frame state management using read-write locks for efficient concurrent access.
+Thread-safe input state tracking with per-frame state management using `std::shared_mutex` for efficient concurrent access.
 
 ## API Reference
 
@@ -187,7 +187,7 @@ void mainLoop() {
 
 - Input queries are thread-safe and can be called from any thread
 - State updates should be synchronized (typically done by main thread)
-- Uses read-write locks for efficient concurrent read access
+- Uses `std::shared_mutex` for efficient concurrent read access
 
 ## Best Practices
 

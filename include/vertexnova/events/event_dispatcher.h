@@ -12,12 +12,12 @@
 
 #include "event_listener.h"
 #include "event.h"
-#include "internal/read_write_mutex.h"
 
+#include <algorithm>
+#include <memory>
+#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
-#include <memory>
-#include <algorithm>
 
 namespace vne::events {
 
@@ -46,7 +46,7 @@ class VNEEVENTS_API EventDispatcher {
      * @param listener The listener to be registered.
      */
     void registerListener(EventType event_type, ListenerPtr listener) {
-        internal::WriteLockGuard lock(mutex_);
+        std::unique_lock lock(mutex_);
         listeners_[event_type].push_back(std::move(listener));
     }
 
@@ -56,7 +56,7 @@ class VNEEVENTS_API EventDispatcher {
      * @param listener The listener to be unregistered.
      */
     void unregisterListener(EventType event_type, const EventListener* listener) {
-        internal::WriteLockGuard lock(mutex_);
+        std::unique_lock lock(mutex_);
         auto it = listeners_.find(event_type);
         if (it != listeners_.end()) {
             auto& list = it->second;
@@ -74,7 +74,7 @@ class VNEEVENTS_API EventDispatcher {
     void dispatch(const Event& event) const {
         std::vector<ListenerPtr> listeners_copy;
         {
-            internal::ReadLockGuard lock(mutex_);
+            std::shared_lock lock(mutex_);
             auto it = listeners_.find(event.type());
             if (it != listeners_.end()) {
                 listeners_copy = it->second;
@@ -92,14 +92,14 @@ class VNEEVENTS_API EventDispatcher {
      * @return The number of registered listeners.
      */
     [[nodiscard]] size_t listenerCount(EventType event_type) const {
-        internal::ReadLockGuard lock(mutex_);
+        std::shared_lock lock(mutex_);
         auto it = listeners_.find(event_type);
         return it != listeners_.end() ? it->second.size() : 0;
     }
 
    private:
     std::unordered_map<EventType, std::vector<ListenerPtr>> listeners_;
-    mutable internal::ReadWriteMutex mutex_;
+    mutable std::shared_mutex mutex_;
 };
 
 }  // namespace vne::events

@@ -71,10 +71,10 @@ cmake --build .
 
 The vneevents library provides thread-safe operations:
 
-- **EventQueue**: Thread-safe push and pop operations using read-write locks
-- **EventDispatcher**: Thread-safe listener registration and dispatch
+- **EventQueue**: Thread-safe push and non-blocking pop using `std::mutex` and `std::condition_variable`
+- **EventDispatcher**: Thread-safe listener registration and dispatch using `std::shared_mutex`
 - **EventManager**: All public methods are thread-safe
-- **Input State**: Thread-safe queries and updates
+- **Input State**: Thread-safe queries and updates using `std::shared_mutex`
 
 ### Concurrent Event Pushing
 
@@ -120,11 +120,11 @@ manager.pushEvent(std::make_unique<KeyPressedEvent>(KeyCode::eSpace));
 
 ## Implementation Details
 
-### ReadWriteMutex
+### Synchronization
 
-The library uses `ReadWriteMutex` internally:
-- **Read locks**: For querying state (multiple readers allowed)
-- **Write locks**: For modifying state (exclusive access)
+The library uses standard C++ sync primitives:
+- **EventQueue**: `std::mutex` + `std::condition_variable` (`notify_one` on push; pop stays non-blocking)
+- **EventDispatcher / InputState**: `std::shared_mutex` with `std::shared_lock` for reads and `std::unique_lock` for writes
 
 ### Atomic Operations
 
