@@ -260,7 +260,6 @@ set(VNEEVENTS_HEADERS
     ${VNE_INCLUDE_DIR}/vertexnova/events/input/input.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/input/input_manager.h
     ${VNE_INCLUDE_DIR}/vertexnova/events/input/input_state.h
-    ${VNE_INCLUDE_DIR}/vertexnova/events/internal/read_write_mutex.h
 )
 
 #==============================================================================

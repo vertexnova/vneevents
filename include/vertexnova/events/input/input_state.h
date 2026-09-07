@@ -10,9 +10,10 @@
  * ----------------------------------------------------------------------
  */
 
-#include "../internal/read_write_mutex.h"
 #include "../export.h"
 
+#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 #include <utility>
 
@@ -62,7 +63,7 @@ class VNEEVENTS_API InputState {
     void nextFrame();
 
    private:
-    mutable internal::ReadWriteMutex mutex_;
+    mutable std::shared_mutex mutex_;
 
     std::unordered_map<int, bool> key_state_;
     std::unordered_map<int, bool> key_just_pressed_;
