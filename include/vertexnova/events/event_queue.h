@@ -12,7 +12,6 @@
 
 #include "event.h"
 
-#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -43,11 +42,8 @@ class VNEEVENTS_API EventQueue {
      * @param event The event to push.
      */
     void push(EventPtr event) {
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            queue_.push(std::move(event));
-        }
-        condition_.notify_one();
+        std::lock_guard<std::mutex> lock(mutex_);
+        queue_.push(std::move(event));
     }
 
     /**
@@ -97,7 +93,6 @@ class VNEEVENTS_API EventQueue {
    private:
     std::queue<EventPtr> queue_;
     mutable std::mutex mutex_;
-    std::condition_variable condition_;
 };
 
 }  // namespace vne::events

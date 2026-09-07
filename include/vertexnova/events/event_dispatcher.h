@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <shared_mutex>
 #include <unordered_map>
 #include <vector>
@@ -28,7 +29,13 @@ namespace vne::events {
  * The dispatcher maintains a map of event types to listener lists and
  * dispatches events to all registered listeners in a thread-safe manner.
  *
- * @threadsafe All public methods are thread-safe.
+ * @threadsafe Listener registration, unregistration, and the listener map
+ *             itself are protected by a shared mutex. `dispatch` copies the
+ *             listener list under a shared lock, then releases the lock before
+ *             invoking `EventListener::onEvent`. Concurrent `dispatch` calls
+ *             may therefore run callbacks in parallel; listeners must
+ *             synchronize any shared state they touch, or callers must
+ *             serialize dispatch.
  */
 class VNEEVENTS_API EventDispatcher {
    public:

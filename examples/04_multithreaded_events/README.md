@@ -71,7 +71,7 @@ cmake --build .
 
 The vneevents library provides thread-safe operations:
 
-- **EventQueue**: Thread-safe push and non-blocking pop using `std::mutex` and `std::condition_variable`
+- **EventQueue**: Thread-safe push and non-blocking pop using `std::mutex`
 - **EventDispatcher**: Thread-safe listener registration and dispatch using `std::shared_mutex`
 - **EventManager**: All public methods are thread-safe
 - **Input State**: Thread-safe queries and updates using `std::shared_mutex`
@@ -123,21 +123,23 @@ manager.pushEvent(std::make_unique<KeyPressedEvent>(KeyCode::eSpace));
 ### Synchronization
 
 The library uses standard C++ sync primitives:
-- **EventQueue**: `std::mutex` + `std::condition_variable` (`notify_one` on push; pop stays non-blocking)
+- **EventQueue**: `std::mutex` for push/pop/size/clear (non-blocking pop)
 - **EventDispatcher / InputState**: `std::shared_mutex` with `std::shared_lock` for reads and `std::unique_lock` for writes
+
+`EventDispatcher::dispatch` releases its mutex before calling `EventListener::onEvent`. Concurrent dispatches can therefore run callbacks in parallel; listener implementations must synchronize shared state, or the application must serialize dispatch.
 
 ### Atomic Operations
 
 Event counting uses `std::atomic<int>` to ensure thread-safe increments.
 
-### No Data Races
+### Queue and listener-map safety
 
-All event operations are protected by appropriate locks, ensuring:
-- No event loss
-- No event duplication
-- No listener corruption
-- Correct event ordering
+Locks protect the event queue and the dispatcher listener map, ensuring:
+- No event loss from concurrent push/pop on the queue
+- No corruption of the registered listener list
+- FIFO ordering of events within a single queue
 
+They do **not** serialize listener callbacks across concurrent `dispatch` calls; that responsibility belongs to listeners or to the caller.
 ## Code Structure
 
 - `main.cpp`: Minimal setup, uses `LoggingGuard_C` and calls `ThreadedDemo::run()`
