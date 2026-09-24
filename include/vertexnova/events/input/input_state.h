@@ -80,13 +80,9 @@ class VNEEVENTS_API InputState {
         static_assert(std::is_same_v<T, int> || std::is_same_v<T, float>);
 
        public:
-        void store(T x, T y) noexcept {
-            bits_.store(pack(x, y), std::memory_order_relaxed);
-        }
+        void store(T x, T y) noexcept { bits_.store(pack(x, y), std::memory_order_relaxed); }
 
-        [[nodiscard]] std::pair<T, T> load() const noexcept {
-            return unpack(bits_.load(std::memory_order_relaxed));
-        }
+        [[nodiscard]] std::pair<T, T> load() const noexcept { return unpack(bits_.load(std::memory_order_relaxed)); }
 
         void reset() noexcept { bits_.store(0, std::memory_order_relaxed); }
 
@@ -114,8 +110,7 @@ class VNEEVENTS_API InputState {
         }
 
         static std::pair<T, T> unpack(std::uint64_t word) noexcept {
-            return {fromBits(static_cast<std::uint32_t>(word >> 32U)),
-                    fromBits(static_cast<std::uint32_t>(word))};
+            return {fromBits(static_cast<std::uint32_t>(word >> 32U)), fromBits(static_cast<std::uint32_t>(word))};
         }
     };
 

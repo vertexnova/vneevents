@@ -49,18 +49,18 @@ bool InputState::isKeyJustReleased(int key) const {
 }
 
 bool InputState::isMouseButtonPressed(int button) const {
-    return isValidButton(button) &&
-           mouse_button_state_[static_cast<std::size_t>(button)].load(std::memory_order_relaxed);
+    return isValidButton(button)
+           && mouse_button_state_[static_cast<std::size_t>(button)].load(std::memory_order_relaxed);
 }
 
 bool InputState::isMouseButtonJustPressed(int button) const {
-    return isValidButton(button) &&
-           mouse_button_just_pressed_[static_cast<std::size_t>(button)].load(std::memory_order_relaxed);
+    return isValidButton(button)
+           && mouse_button_just_pressed_[static_cast<std::size_t>(button)].load(std::memory_order_relaxed);
 }
 
 bool InputState::isMouseButtonJustReleased(int button) const {
-    return isValidButton(button) &&
-           mouse_button_just_released_[static_cast<std::size_t>(button)].load(std::memory_order_relaxed);
+    return isValidButton(button)
+           && mouse_button_just_released_[static_cast<std::size_t>(button)].load(std::memory_order_relaxed);
 }
 
 std::pair<int, int> InputState::mousePosition() const {
