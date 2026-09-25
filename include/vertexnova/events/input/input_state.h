@@ -15,8 +15,8 @@
 
 #include <array>
 #include <atomic>
-#include <bit>
 #include <cstdint>
+#include <cstring>
 #include <type_traits>
 #include <utility>
 
@@ -93,7 +93,9 @@ class VNEEVENTS_API InputState {
 
         static std::uint32_t toBits(T v) noexcept {
             if constexpr (std::is_same_v<T, float>) {
-                return std::bit_cast<std::uint32_t>(v);
+                std::uint32_t bits{};
+                std::memcpy(&bits, &v, sizeof(bits));
+                return bits;
             } else {
                 return static_cast<std::uint32_t>(static_cast<std::int32_t>(v));
             }
@@ -101,7 +103,9 @@ class VNEEVENTS_API InputState {
 
         static T fromBits(std::uint32_t bits) noexcept {
             if constexpr (std::is_same_v<T, float>) {
-                return std::bit_cast<float>(bits);
+                float value{};
+                std::memcpy(&value, &bits, sizeof(value));
+                return value;
             } else {
                 return static_cast<T>(static_cast<std::int32_t>(bits));
             }

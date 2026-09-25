@@ -236,38 +236,57 @@ TEST(InputStateTest, ConcurrentKeyUpdatesDoNotLoseState) {
 }
 
 TEST(InputStateTest, ConcurrentNextFrameKeepsEdgesVisible) {
-    // A press that races nextFrame must still show as just-pressed on some frame
-    // (frame id rewritten onto the post-advance epoch), not wiped by a clear.
+    // A press that races nextFrame must still show on some frame (frame id rewritten
+    // onto the post-advance epoch), not wiped by a clear.
+    //
+    // Reader runs first; writer keeps producing until pressed, released, and scroll
+    // are each observed (avoids the CI flake where the writer finishes first).
     InputState state;
     constexpr int kKey = 0;
+    std::atomic<bool> reader_ready{false};
     std::atomic<bool> stop{false};
-    std::atomic<int> edges_seen{0};
+    std::atomic<int> pressed_seen{0};
+    std::atomic<int> released_seen{0};
+    std::atomic<int> scroll_seen{0};
 
-    std::thread writer([&state, &stop]() {
-        for (int i = 0; i < 50000 && !stop.load(std::memory_order_relaxed); ++i) {
-            state.updateKeyState(kKey, true);
-            state.updateKeyState(kKey, false);
-            state.updateMouseScroll(1.0f, 1.0f);
-        }
-        stop.store(true, std::memory_order_relaxed);
-    });
-
-    std::thread reader([&state, &stop, &edges_seen]() {
-        while (!stop.load(std::memory_order_relaxed)) {
-            if (state.isKeyJustPressed(kKey) || state.isKeyJustReleased(kKey)) {
-                edges_seen.fetch_add(1, std::memory_order_relaxed);
+    std::thread reader([&state, &reader_ready, &stop, &pressed_seen, &released_seen, &scroll_seen]() {
+        reader_ready.store(true, std::memory_order_release);
+        while (!stop.load(std::memory_order_acquire)) {
+            if (state.isKeyJustPressed(kKey)) {
+                pressed_seen.fetch_add(1, std::memory_order_relaxed);
+            }
+            if (state.isKeyJustReleased(kKey)) {
+                released_seen.fetch_add(1, std::memory_order_relaxed);
             }
             const auto [sx, sy] = state.mouseScroll();
             if (sx != 0.0f || sy != 0.0f) {
-                edges_seen.fetch_add(1, std::memory_order_relaxed);
+                scroll_seen.fetch_add(1, std::memory_order_relaxed);
             }
             state.nextFrame();
         }
     });
 
-    writer.join();
+    while (!reader_ready.load(std::memory_order_acquire)) {
+    }
+
+    constexpr int kMaxWrites = 200000;
+    int writes = 0;
+    while (writes < kMaxWrites
+           && (pressed_seen.load(std::memory_order_relaxed) == 0
+               || released_seen.load(std::memory_order_relaxed) == 0
+               || scroll_seen.load(std::memory_order_relaxed) == 0)) {
+        state.updateKeyState(kKey, true);
+        state.updateKeyState(kKey, false);
+        state.updateMouseScroll(1.0f, 1.0f);
+        ++writes;
+    }
+
+    stop.store(true, std::memory_order_release);
     reader.join();
-    EXPECT_GT(edges_seen.load(), 0);
+
+    EXPECT_GT(pressed_seen.load(), 0) << "no just-pressed after " << writes << " writes";
+    EXPECT_GT(released_seen.load(), 0) << "no just-released after " << writes << " writes";
+    EXPECT_GT(scroll_seen.load(), 0) << "no scroll after " << writes << " writes";
 }
 
 // ============================================================================
