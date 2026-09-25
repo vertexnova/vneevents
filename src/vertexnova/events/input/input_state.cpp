@@ -11,105 +11,139 @@
 
 namespace vne::events {
 
+static_assert(std::atomic<bool>::is_always_lock_free);
+static_assert(std::atomic<std::uint64_t>::is_always_lock_free,
+              "InputState needs lock-free 64-bit atomics for AtomicXY / frame ids");
+
+namespace {
+
+constexpr bool isValidKey(int key) noexcept {
+    return key >= 0 && key < InputState::kKeyCodeCount;
+}
+
+constexpr bool isValidButton(int button) noexcept {
+    return button >= 0 && button < InputState::kMouseButtonCount;
+}
+
+/// Write the current frame id into @p slot; retry if nextFrame() advanced mid-write.
+void setFrameId(std::atomic<std::uint64_t>& slot, const std::atomic<std::uint64_t>& frame) noexcept {
+    for (;;) {
+        const auto current = frame.load(std::memory_order_relaxed);
+        slot.store(current, std::memory_order_release);
+        if (frame.load(std::memory_order_acquire) == current) {
+            return;
+        }
+    }
+}
+
+[[nodiscard]] bool isCurrentFrame(const std::atomic<std::uint64_t>& slot,
+                                  const std::atomic<std::uint64_t>& frame) noexcept {
+    const auto current = frame.load(std::memory_order_acquire);
+    return slot.load(std::memory_order_acquire) == current;
+}
+
+}  // namespace
+
 InputState::InputState() = default;
 
 bool InputState::isKeyPressed(int key) const {
-    std::shared_lock lock(mutex_);
-    auto it = key_state_.find(key);
-    return it != key_state_.end() && it->second;
+    return isValidKey(key) && key_state_[static_cast<std::size_t>(key)].load(std::memory_order_relaxed);
 }
 
 bool InputState::isKeyJustPressed(int key) const {
-    std::shared_lock lock(mutex_);
-    auto it = key_just_pressed_.find(key);
-    return it != key_just_pressed_.end() && it->second;
+    return isValidKey(key) && isCurrentFrame(key_just_pressed_[static_cast<std::size_t>(key)], frame_);
 }
 
 bool InputState::isKeyJustReleased(int key) const {
-    std::shared_lock lock(mutex_);
-    auto it = key_just_released_.find(key);
-    return it != key_just_released_.end() && it->second;
+    return isValidKey(key) && isCurrentFrame(key_just_released_[static_cast<std::size_t>(key)], frame_);
 }
 
 bool InputState::isMouseButtonPressed(int button) const {
-    std::shared_lock lock(mutex_);
-    auto it = mouse_button_state_.find(button);
-    return it != mouse_button_state_.end() && it->second;
+    return isValidButton(button)
+           && mouse_button_state_[static_cast<std::size_t>(button)].load(std::memory_order_relaxed);
 }
 
 bool InputState::isMouseButtonJustPressed(int button) const {
-    std::shared_lock lock(mutex_);
-    auto it = mouse_button_just_pressed_.find(button);
-    return it != mouse_button_just_pressed_.end() && it->second;
+    return isValidButton(button)
+           && isCurrentFrame(mouse_button_just_pressed_[static_cast<std::size_t>(button)], frame_);
 }
 
 bool InputState::isMouseButtonJustReleased(int button) const {
-    std::shared_lock lock(mutex_);
-    auto it = mouse_button_just_released_.find(button);
-    return it != mouse_button_just_released_.end() && it->second;
+    return isValidButton(button)
+           && isCurrentFrame(mouse_button_just_released_[static_cast<std::size_t>(button)], frame_);
 }
 
 std::pair<int, int> InputState::mousePosition() const {
-    std::shared_lock lock(mutex_);
-    return mouse_position_;
+    return mouse_position_.load();
 }
 
 std::pair<float, float> InputState::mouseScroll() const {
-    std::shared_lock lock(mutex_);
-    return mouse_scroll_;
+    const auto current = frame_.load(std::memory_order_acquire);
+    if (mouse_scroll_frame_.load(std::memory_order_acquire) != current) {
+        return {0.0f, 0.0f};
+    }
+    const auto value = mouse_scroll_.load();
+    // Drop the sample if nextFrame() raced between the frame-id check and the load.
+    if (mouse_scroll_frame_.load(std::memory_order_acquire) != current
+        || frame_.load(std::memory_order_acquire) != current) {
+        return {0.0f, 0.0f};
+    }
+    return value;
 }
 
 std::pair<int, int> InputState::windowSize() const {
-    std::shared_lock lock(mutex_);
-    return window_size_;
+    return window_size_.load();
 }
 
 void InputState::updateKeyState(int key, bool pressed) {
-    std::unique_lock lock(mutex_);
-    bool was_pressed = key_state_[key];
-    key_state_[key] = pressed;
-
+    if (!isValidKey(key)) {
+        return;
+    }
+    const auto i = static_cast<std::size_t>(key);
+    const bool was_pressed = key_state_[i].exchange(pressed, std::memory_order_relaxed);
     if (pressed && !was_pressed) {
-        key_just_pressed_[key] = true;
+        setFrameId(key_just_pressed_[i], frame_);
     } else if (!pressed && was_pressed) {
-        key_just_released_[key] = true;
+        setFrameId(key_just_released_[i], frame_);
     }
 }
 
 void InputState::updateMouseButtonState(int button, bool pressed) {
-    std::unique_lock lock(mutex_);
-    bool was_pressed = mouse_button_state_[button];
-    mouse_button_state_[button] = pressed;
-
+    if (!isValidButton(button)) {
+        return;
+    }
+    const auto i = static_cast<std::size_t>(button);
+    const bool was_pressed = mouse_button_state_[i].exchange(pressed, std::memory_order_relaxed);
     if (pressed && !was_pressed) {
-        mouse_button_just_pressed_[button] = true;
+        setFrameId(mouse_button_just_pressed_[i], frame_);
     } else if (!pressed && was_pressed) {
-        mouse_button_just_released_[button] = true;
+        setFrameId(mouse_button_just_released_[i], frame_);
     }
 }
 
 void InputState::updateMousePosition(int x, int y) {
-    std::unique_lock lock(mutex_);
-    mouse_position_ = {x, y};
+    mouse_position_.store(x, y);
 }
 
 void InputState::updateMouseScroll(float x_offset, float y_offset) {
-    std::unique_lock lock(mutex_);
-    mouse_scroll_ = {x_offset, y_offset};
+    for (;;) {
+        const auto current = frame_.load(std::memory_order_relaxed);
+        mouse_scroll_.store(x_offset, y_offset);
+        mouse_scroll_frame_.store(current, std::memory_order_release);
+        if (frame_.load(std::memory_order_acquire) == current) {
+            return;
+        }
+    }
 }
 
 void InputState::updateWindowSize(int width, int height) {
-    std::unique_lock lock(mutex_);
-    window_size_ = {width, height};
+    window_size_.store(width, height);
 }
 
 void InputState::nextFrame() {
-    std::unique_lock lock(mutex_);
-    key_just_pressed_.clear();
-    key_just_released_.clear();
-    mouse_button_just_pressed_.clear();
-    mouse_button_just_released_.clear();
-    mouse_scroll_ = {0.0f, 0.0f};
+    // Advance epoch: prior edge/scroll frame ids no longer match. Concurrent writers
+    // that observe the bump rewrite onto this new frame instead of being erased.
+    frame_.fetch_add(1, std::memory_order_acq_rel);
 }
 
 }  // namespace vne::events

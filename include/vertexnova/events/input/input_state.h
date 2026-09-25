@@ -11,10 +11,13 @@
  */
 
 #include "../export.h"
+#include "../types.h"
 
-#include <mutex>
-#include <shared_mutex>
-#include <unordered_map>
+#include <array>
+#include <atomic>
+#include <cstdint>
+#include <cstring>
+#include <type_traits>
 #include <utility>
 
 namespace vne::events {
@@ -23,59 +26,121 @@ class InputManager;
 
 /**
  * @class InputState
- * @brief Manages the state of keyboard, mouse, and window inputs.
+ * @brief Lock-free keyboard, mouse, and window input snapshot.
  *
- * This class tracks key states, mouse button states, mouse position,
- * scroll offsets, and window size. It provides thread-safe access
- * to query and update these states.
+ * Host/DOM callbacks write; the render thread reads and calls nextFrame().
+ * No mutex — locking the browser main thread behind a render worker stalls input.
  *
- * @threadsafe All public methods are thread-safe.
+ * Coordinates and sizes use AtomicXY: both components live in one 64-bit atomic
+ * so a reader never sees new-x with old-y (or vice versa).
+ *
+ * Edge flags and scroll are owned by a frame epoch: writers set the current
+ * frame id, nextFrame() advances the epoch. That way a clear cannot erase a
+ * concurrent callback update (the update lands on the new frame instead).
+ *
+ * @threadsafe All public methods are thread-safe and lock-free.
  */
 class VNEEVENTS_API InputState {
    public:
+    static constexpr int kMaxKeyCode = static_cast<int>(KeyCode::eLast);
+    static constexpr int kKeyCodeCount = kMaxKeyCode + 1;
+    static constexpr int kMouseButtonCount = static_cast<int>(MouseButton::eLast) + 1;
+
     InputState();
 
-    // Key state queries
     [[nodiscard]] bool isKeyPressed(int key) const;
     [[nodiscard]] bool isKeyJustPressed(int key) const;
     [[nodiscard]] bool isKeyJustReleased(int key) const;
 
-    // Mouse button queries
     [[nodiscard]] bool isMouseButtonPressed(int button) const;
     [[nodiscard]] bool isMouseButtonJustPressed(int button) const;
     [[nodiscard]] bool isMouseButtonJustReleased(int button) const;
 
-    // Mouse position and scroll
     [[nodiscard]] std::pair<int, int> mousePosition() const;
     [[nodiscard]] std::pair<float, float> mouseScroll() const;
-
-    // Window size
     [[nodiscard]] std::pair<int, int> windowSize() const;
 
-    // State updates (called by input system)
     void updateKeyState(int key, bool pressed);
     void updateMouseButtonState(int button, bool pressed);
     void updateMousePosition(int x, int y);
     void updateMouseScroll(float x_offset, float y_offset);
     void updateWindowSize(int width, int height);
 
-    /// Called once per frame to reset just-pressed/released states
+    /// Advances the frame epoch so prior just-pressed/released and scroll expire.
     void nextFrame();
 
    private:
-    mutable std::shared_mutex mutex_;
+    /**
+     * Tear-free (x, y) stored as one atomic word.
+     *
+     *   bits_ = [ x : high 32 ][ y : low 32 ]
+     *
+     * Two separate atomics would allow a reader to observe a mixed pair between
+     * stores; one word means every load sees either the old pair or the new pair.
+     */
+    template<typename T>
+    class AtomicXY {
+        static_assert(sizeof(T) == sizeof(std::uint32_t));
+        static_assert(std::is_same_v<T, int> || std::is_same_v<T, float>);
 
-    std::unordered_map<int, bool> key_state_;
-    std::unordered_map<int, bool> key_just_pressed_;
-    std::unordered_map<int, bool> key_just_released_;
+       public:
+        void store(T x, T y) noexcept { bits_.store(pack(x, y), std::memory_order_relaxed); }
 
-    std::unordered_map<int, bool> mouse_button_state_;
-    std::unordered_map<int, bool> mouse_button_just_pressed_;
-    std::unordered_map<int, bool> mouse_button_just_released_;
+        [[nodiscard]] std::pair<T, T> load() const noexcept { return unpack(bits_.load(std::memory_order_relaxed)); }
 
-    std::pair<int, int> mouse_position_{0, 0};
-    std::pair<float, float> mouse_scroll_{0.0f, 0.0f};
-    std::pair<int, int> window_size_{0, 0};
+       private:
+        std::atomic<std::uint64_t> bits_{0};
+
+        static std::uint32_t toBits(T v) noexcept {
+            if constexpr (std::is_same_v<T, float>) {
+                std::uint32_t bits{};
+                std::memcpy(&bits, &v, sizeof(bits));
+                return bits;
+            } else {
+                return static_cast<std::uint32_t>(static_cast<std::int32_t>(v));
+            }
+        }
+
+        static T fromBits(std::uint32_t bits) noexcept {
+            if constexpr (std::is_same_v<T, float>) {
+                float value{};
+                std::memcpy(&value, &bits, sizeof(value));
+                return value;
+            } else {
+                return static_cast<T>(static_cast<std::int32_t>(bits));
+            }
+        }
+
+        static std::uint64_t pack(T x, T y) noexcept {
+            return (static_cast<std::uint64_t>(toBits(x)) << 32U) | toBits(y);
+        }
+
+        static std::pair<T, T> unpack(std::uint64_t word) noexcept {
+            return {fromBits(static_cast<std::uint32_t>(word >> 32U)), fromBits(static_cast<std::uint32_t>(word))};
+        }
+    };
+
+    using KeyFlags = std::array<std::atomic<bool>, kKeyCodeCount>;
+    using ButtonFlags = std::array<std::atomic<bool>, kMouseButtonCount>;
+    /// Frame id when the edge fired; 0 = never. Visible iff equals frame_.
+    using KeyEdgeFrames = std::array<std::atomic<std::uint64_t>, kKeyCodeCount>;
+    using ButtonEdgeFrames = std::array<std::atomic<std::uint64_t>, kMouseButtonCount>;
+
+    KeyFlags key_state_{};
+    KeyEdgeFrames key_just_pressed_{};
+    KeyEdgeFrames key_just_released_{};
+
+    ButtonFlags mouse_button_state_{};
+    ButtonEdgeFrames mouse_button_just_pressed_{};
+    ButtonEdgeFrames mouse_button_just_released_{};
+
+    AtomicXY<int> mouse_position_;
+    AtomicXY<float> mouse_scroll_;
+    AtomicXY<int> window_size_;
+
+    /// Starts at 1 so a zero edge frame id never matches.
+    std::atomic<std::uint64_t> frame_{1};
+    std::atomic<std::uint64_t> mouse_scroll_frame_{0};
 
     friend class InputManager;
 };

@@ -7,6 +7,9 @@
 #include <gtest/gtest.h>
 #include "vertexnova/events/events.h"
 
+#include <atomic>
+#include <thread>
+
 namespace vne::events {
 
 // ============================================================================
@@ -112,6 +115,177 @@ TEST(InputStateTest, WindowSize) {
     auto [w, h] = state.windowSize();
     EXPECT_EQ(w, 1920);
     EXPECT_EQ(h, 1080);
+}
+
+// ============================================================================
+// Lock-free layout: bounds, boundaries, and cross-thread integrity
+// ============================================================================
+
+TEST(InputStateTest, OutOfRangeKeysAreIgnored) {
+    InputState state;
+    state.updateKeyState(static_cast<int>(KeyCode::eUnknown), true);
+    EXPECT_FALSE(state.isKeyPressed(static_cast<int>(KeyCode::eUnknown)));
+
+    state.updateKeyState(InputState::kKeyCodeCount, true);
+    EXPECT_FALSE(state.isKeyPressed(InputState::kKeyCodeCount));
+
+    state.updateKeyState(99999, true);
+    EXPECT_FALSE(state.isKeyPressed(99999));
+}
+
+TEST(InputStateTest, OutOfRangeMouseButtonsAreIgnored) {
+    InputState state;
+    state.updateMouseButtonState(-1, true);
+    EXPECT_FALSE(state.isMouseButtonPressed(-1));
+
+    state.updateMouseButtonState(InputState::kMouseButtonCount, true);
+    EXPECT_FALSE(state.isMouseButtonPressed(InputState::kMouseButtonCount));
+}
+
+TEST(InputStateTest, KeyArrayBoundaries) {
+    InputState state;
+    for (const int key : {0, 63, 64, 255, InputState::kMaxKeyCode}) {
+        state.updateKeyState(key, true);
+        EXPECT_TRUE(state.isKeyPressed(key)) << "key " << key;
+    }
+    EXPECT_FALSE(state.isKeyPressed(62));
+    EXPECT_FALSE(state.isKeyPressed(65));
+    EXPECT_FALSE(state.isKeyPressed(InputState::kMaxKeyCode - 1));
+
+    for (const int key : {0, 63, 64, 255, InputState::kMaxKeyCode}) {
+        state.updateKeyState(key, false);
+        EXPECT_FALSE(state.isKeyPressed(key)) << "key " << key;
+        EXPECT_TRUE(state.isKeyJustReleased(key)) << "key " << key;
+    }
+}
+
+TEST(InputStateTest, MousePositionNeverTears) {
+    InputState state;
+    std::atomic<bool> stop{false};
+    std::atomic<int> torn{0};
+
+    std::thread writer([&state, &stop]() {
+        for (int i = 0; i < 200000 && !stop.load(std::memory_order_relaxed); ++i) {
+            const int v = (i % 2000) - 1000;
+            state.updateMousePosition(v, v);
+        }
+        stop.store(true, std::memory_order_relaxed);
+    });
+
+    std::thread reader([&state, &stop, &torn]() {
+        while (!stop.load(std::memory_order_relaxed)) {
+            const auto [x, y] = state.mousePosition();
+            if (x != y) {
+                torn.fetch_add(1, std::memory_order_relaxed);
+            }
+        }
+    });
+
+    writer.join();
+    reader.join();
+    EXPECT_EQ(torn.load(), 0);
+}
+
+TEST(InputStateTest, MouseScrollNeverTears) {
+    InputState state;
+    std::atomic<bool> stop{false};
+    std::atomic<int> torn{0};
+
+    std::thread writer([&state, &stop]() {
+        for (int i = 0; i < 200000 && !stop.load(std::memory_order_relaxed); ++i) {
+            const auto v = static_cast<float>((i % 2000) - 1000);
+            state.updateMouseScroll(v, v);
+        }
+        stop.store(true, std::memory_order_relaxed);
+    });
+
+    std::thread reader([&state, &stop, &torn]() {
+        while (!stop.load(std::memory_order_relaxed)) {
+            const auto [x, y] = state.mouseScroll();
+            if (x != y) {
+                torn.fetch_add(1, std::memory_order_relaxed);
+            }
+        }
+    });
+
+    writer.join();
+    reader.join();
+    EXPECT_EQ(torn.load(), 0);
+}
+
+TEST(InputStateTest, ConcurrentKeyUpdatesDoNotLoseState) {
+    InputState state;
+    constexpr int kKeysPerThread = 64;
+
+    std::thread even([&state]() {
+        for (int k = 0; k < kKeysPerThread * 2; k += 2) {
+            state.updateKeyState(k, true);
+        }
+    });
+    std::thread odd([&state]() {
+        for (int k = 1; k < kKeysPerThread * 2; k += 2) {
+            state.updateKeyState(k, true);
+        }
+    });
+    even.join();
+    odd.join();
+
+    for (int k = 0; k < kKeysPerThread * 2; ++k) {
+        EXPECT_TRUE(state.isKeyPressed(k)) << "key " << k << " was lost";
+    }
+}
+
+TEST(InputStateTest, ConcurrentNextFrameKeepsEdgesVisible) {
+    // A press that races nextFrame must still show on some frame (frame id rewritten
+    // onto the post-advance epoch), not wiped by a clear.
+    //
+    // Reader runs first; writer keeps producing until pressed, released, and scroll
+    // are each observed (avoids the CI flake where the writer finishes first).
+    InputState state;
+    constexpr int kKey = 0;
+    std::atomic<bool> reader_ready{false};
+    std::atomic<bool> stop{false};
+    std::atomic<int> pressed_seen{0};
+    std::atomic<int> released_seen{0};
+    std::atomic<int> scroll_seen{0};
+
+    std::thread reader([&state, &reader_ready, &stop, &pressed_seen, &released_seen, &scroll_seen]() {
+        reader_ready.store(true, std::memory_order_release);
+        while (!stop.load(std::memory_order_acquire)) {
+            if (state.isKeyJustPressed(kKey)) {
+                pressed_seen.fetch_add(1, std::memory_order_relaxed);
+            }
+            if (state.isKeyJustReleased(kKey)) {
+                released_seen.fetch_add(1, std::memory_order_relaxed);
+            }
+            const auto [sx, sy] = state.mouseScroll();
+            if (sx != 0.0f || sy != 0.0f) {
+                scroll_seen.fetch_add(1, std::memory_order_relaxed);
+            }
+            state.nextFrame();
+        }
+    });
+
+    while (!reader_ready.load(std::memory_order_acquire)) {
+    }
+
+    constexpr int kMaxWrites = 200000;
+    int writes = 0;
+    while (writes < kMaxWrites
+           && (pressed_seen.load(std::memory_order_relaxed) == 0 || released_seen.load(std::memory_order_relaxed) == 0
+               || scroll_seen.load(std::memory_order_relaxed) == 0)) {
+        state.updateKeyState(kKey, true);
+        state.updateKeyState(kKey, false);
+        state.updateMouseScroll(1.0f, 1.0f);
+        ++writes;
+    }
+
+    stop.store(true, std::memory_order_release);
+    reader.join();
+
+    EXPECT_GT(pressed_seen.load(), 0) << "no just-pressed after " << writes << " writes";
+    EXPECT_GT(released_seen.load(), 0) << "no just-released after " << writes << " writes";
+    EXPECT_GT(scroll_seen.load(), 0) << "no scroll after " << writes << " writes";
 }
 
 // ============================================================================
