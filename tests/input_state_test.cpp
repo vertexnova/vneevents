@@ -272,8 +272,7 @@ TEST(InputStateTest, ConcurrentNextFrameKeepsEdgesVisible) {
     constexpr int kMaxWrites = 200000;
     int writes = 0;
     while (writes < kMaxWrites
-           && (pressed_seen.load(std::memory_order_relaxed) == 0
-               || released_seen.load(std::memory_order_relaxed) == 0
+           && (pressed_seen.load(std::memory_order_relaxed) == 0 || released_seen.load(std::memory_order_relaxed) == 0
                || scroll_seen.load(std::memory_order_relaxed) == 0)) {
         state.updateKeyState(kKey, true);
         state.updateKeyState(kKey, false);
