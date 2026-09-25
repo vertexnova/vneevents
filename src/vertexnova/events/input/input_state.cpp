@@ -84,7 +84,8 @@ std::pair<float, float> InputState::mouseScroll() const {
     }
     const auto value = mouse_scroll_.load();
     // Drop the sample if nextFrame() raced between the frame-id check and the load.
-    if (mouse_scroll_frame_.load(std::memory_order_acquire) != current) {
+    if (mouse_scroll_frame_.load(std::memory_order_acquire) != current
+        || frame_.load(std::memory_order_acquire) != current) {
         return {0.0f, 0.0f};
     }
     return value;
