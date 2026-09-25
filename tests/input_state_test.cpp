@@ -235,6 +235,41 @@ TEST(InputStateTest, ConcurrentKeyUpdatesDoNotLoseState) {
     }
 }
 
+TEST(InputStateTest, ConcurrentNextFrameKeepsEdgesVisible) {
+    // A press that races nextFrame must still show as just-pressed on some frame
+    // (frame id rewritten onto the post-advance epoch), not wiped by a clear.
+    InputState state;
+    constexpr int kKey = 0;
+    std::atomic<bool> stop{false};
+    std::atomic<int> edges_seen{0};
+
+    std::thread writer([&state, &stop]() {
+        for (int i = 0; i < 50000 && !stop.load(std::memory_order_relaxed); ++i) {
+            state.updateKeyState(kKey, true);
+            state.updateKeyState(kKey, false);
+            state.updateMouseScroll(1.0f, 1.0f);
+        }
+        stop.store(true, std::memory_order_relaxed);
+    });
+
+    std::thread reader([&state, &stop, &edges_seen]() {
+        while (!stop.load(std::memory_order_relaxed)) {
+            if (state.isKeyJustPressed(kKey) || state.isKeyJustReleased(kKey)) {
+                edges_seen.fetch_add(1, std::memory_order_relaxed);
+            }
+            const auto [sx, sy] = state.mouseScroll();
+            if (sx != 0.0f || sy != 0.0f) {
+                edges_seen.fetch_add(1, std::memory_order_relaxed);
+            }
+            state.nextFrame();
+        }
+    });
+
+    writer.join();
+    reader.join();
+    EXPECT_GT(edges_seen.load(), 0);
+}
+
 // ============================================================================
 // InputManager Tests
 // ============================================================================

@@ -34,6 +34,10 @@ class InputManager;
  * Coordinates and sizes use AtomicXY: both components live in one 64-bit atomic
  * so a reader never sees new-x with old-y (or vice versa).
  *
+ * Edge flags and scroll are owned by a frame epoch: writers set the current
+ * frame id, nextFrame() advances the epoch. That way a clear cannot erase a
+ * concurrent callback update (the update lands on the new frame instead).
+ *
  * @threadsafe All public methods are thread-safe and lock-free.
  */
 class VNEEVENTS_API InputState {
@@ -62,7 +66,7 @@ class VNEEVENTS_API InputState {
     void updateMouseScroll(float x_offset, float y_offset);
     void updateWindowSize(int width, int height);
 
-    /// Clears just-pressed/released flags and scroll for the next frame.
+    /// Advances the frame epoch so prior just-pressed/released and scroll expire.
     void nextFrame();
 
    private:
@@ -83,8 +87,6 @@ class VNEEVENTS_API InputState {
         void store(T x, T y) noexcept { bits_.store(pack(x, y), std::memory_order_relaxed); }
 
         [[nodiscard]] std::pair<T, T> load() const noexcept { return unpack(bits_.load(std::memory_order_relaxed)); }
-
-        void reset() noexcept { bits_.store(0, std::memory_order_relaxed); }
 
        private:
         std::atomic<std::uint64_t> bits_{0};
@@ -116,18 +118,25 @@ class VNEEVENTS_API InputState {
 
     using KeyFlags = std::array<std::atomic<bool>, kKeyCodeCount>;
     using ButtonFlags = std::array<std::atomic<bool>, kMouseButtonCount>;
+    /// Frame id when the edge fired; 0 = never. Visible iff equals frame_.
+    using KeyEdgeFrames = std::array<std::atomic<std::uint64_t>, kKeyCodeCount>;
+    using ButtonEdgeFrames = std::array<std::atomic<std::uint64_t>, kMouseButtonCount>;
 
     KeyFlags key_state_{};
-    KeyFlags key_just_pressed_{};
-    KeyFlags key_just_released_{};
+    KeyEdgeFrames key_just_pressed_{};
+    KeyEdgeFrames key_just_released_{};
 
     ButtonFlags mouse_button_state_{};
-    ButtonFlags mouse_button_just_pressed_{};
-    ButtonFlags mouse_button_just_released_{};
+    ButtonEdgeFrames mouse_button_just_pressed_{};
+    ButtonEdgeFrames mouse_button_just_released_{};
 
     AtomicXY<int> mouse_position_;
     AtomicXY<float> mouse_scroll_;
     AtomicXY<int> window_size_;
+
+    /// Starts at 1 so a zero edge frame id never matches.
+    std::atomic<std::uint64_t> frame_{1};
+    std::atomic<std::uint64_t> mouse_scroll_frame_{0};
 
     friend class InputManager;
 };
