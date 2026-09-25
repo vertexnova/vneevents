@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/vertexnova/vneevents/compare/v1.5.0...v1.6.0) (2026-09-25)
+
+
+### Features
+
+* Mmake the input lock free ([#23](https://github.com/vertexnova/vneevents/issues/23)) ([467250c](https://github.com/vertexnova/vneevents/commit/467250c84cc6a907ca6f291523550d7be3c5f660))
+
 ## [1.5.0](https://github.com/vertexnova/vneevents/compare/v1.4.0...v1.5.0) (2026-08-23)
 
 
